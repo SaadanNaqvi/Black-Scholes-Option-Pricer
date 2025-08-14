@@ -3,7 +3,7 @@ Black Scholes Option Pricer
 
 
 # Features:
-    - [ ] Core Pricing Functionality
+    - [x] Core Pricing Functionality
         - Load and clean real world stock data to get:
             - Spot price, strike price, time to maturity, risk-free interest rate, volatiliy, divident type.
         - Output Call and Put Price
