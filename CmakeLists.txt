@@ -1,0 +1,59 @@
+cmake_minimum_required(VERSION 3.16)
+project(MyImGuiApp LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# ---- Paths ----
+# ---- Auto-discover ImGui under lib/** ----
+# Finds core files and GLFW+OpenGL3 backend .cpps anywhere under lib/
+file(GLOB_RECURSE IMGUI_CORE_SOURCES
+    "${CMAKE_SOURCE_DIR}/lib/**/imgui.cpp"
+    "${CMAKE_SOURCE_DIR}/lib/**/imgui_demo.cpp"
+    "${CMAKE_SOURCE_DIR}/lib/**/imgui_draw.cpp"
+    "${CMAKE_SOURCE_DIR}/lib/**/imgui_tables.cpp"
+    "${CMAKE_SOURCE_DIR}/lib/**/imgui_widgets.cpp"
+)
+file(GLOB_RECURSE IMGUI_BACKEND_SOURCES
+    "${CMAKE_SOURCE_DIR}/lib/**/backends/imgui_impl_glfw.cpp"
+    "${CMAKE_SOURCE_DIR}/lib/**/backends/imgui_impl_opengl3.cpp"
+)
+
+set(IMGUI_SRC ${IMGUI_CORE_SOURCES} ${IMGUI_BACKEND_SOURCES})
+if(NOT IMGUI_SRC)
+    message(FATAL_ERROR "Could not find ImGui sources under lib/. Make sure you extracted/cloned the repo into lib/ (e.g., lib/imgui, lib/imgui-docking, lib/imgui-1.xx).")
+endif()
+
+add_library(imgui STATIC ${IMGUI_SRC})
+
+# Include dirs (auto-find the corresponding folders)
+# Find a directory that contains imgui.h and 'backends'
+get_filename_component(_ANY_IMGUI_DIR "${IMGUI_CORE_SOURCES}" DIRECTORY)
+# Climb up until we see imgui.h
+while(NOT EXISTS "${_ANY_IMGUI_DIR}/imgui.h" AND _ANY_IMGUI_DIR)
+    get_filename_component(_ANY_IMGUI_DIR "${_ANY_IMGUI_DIR}" DIRECTORY)
+endwhile()
+
+# Grab a matching backends dir similarly
+get_filename_component(_ANY_BACKENDS_DIR "${IMGUI_BACKEND_SOURCES}" DIRECTORY)
+
+target_include_directories(imgui PUBLIC
+    "${_ANY_IMGUI_DIR}"
+    "${_ANY_BACKENDS_DIR}"
+)
+
+find_package(OpenGL REQUIRED)
+find_package(glfw3 REQUIRED)
+
+target_link_libraries(imgui PUBLIC glfw OpenGL::GL)
+
+if(APPLE)
+    target_compile_definitions(imgui PUBLIC GL_SILENCE_DEPRECATION)
+    target_link_libraries(imgui PUBLIC "-framework Cocoa" "-framework IOKit" "-framework CoreVideo")
+endif()
+
+
+
+# ---- Your app ----
+add_executable(my_app src/main.cpp)
+target_link_libraries(my_app PRIVATE imgui)
