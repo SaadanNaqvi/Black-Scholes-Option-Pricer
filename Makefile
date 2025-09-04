@@ -12,3 +12,8 @@ run: build
 
 clean:
 	rm -rf build
+
+
+user: main-user.cpp Stocks.cpp Portfolio.cpp User.cpp
+	g++ main-user.cpp Stocks.cpp Portfolio.cpp User.cpp
+	./a.out
