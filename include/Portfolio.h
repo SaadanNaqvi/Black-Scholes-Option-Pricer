@@ -4,28 +4,30 @@
 #include "User.h"
 #include "Position.h"
 #include "Order.h"
+
+#include <unordered_map>
 #include <ctime>
+#include <string>
+
 using namespace std;
 
 class Portfolio{
-    protected:
+    private:
         int portfolioID;  
-        
-        double balance; // Cash Balance
 
-        Position* positions; // Open Positions in stocks/options
+        unordered_map<string, Position*> positions; // Open Positions in stocks/options
         Order* orders; // Ordering a stock
-
-        double portfolioValue; // Cash Balance + Positions
-        double PNL; // Profit and Loss
-
+    protected:
+        double balance;
         time_t lastUpdated;
     public:
         Portfolio();
 
-
+        // getters
         double getBalance();
 
+        double calcPortfolioValue(); // Cash Balance + Positions
+        double calcPNL(); // Profit and Loss
 };
 
 #endif

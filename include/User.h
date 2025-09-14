@@ -3,20 +3,31 @@
 
 #include <string>
 using namespace std;
+#include "Portfolio.h"
 
 class User{
-    protected:
-        string name;
-        int userID:
+    private:
+        string name; // User name
+        int userID; 
 
-        Portfolio portfolio; // Users Portfolio
+        Portfolio* userPortfolio; // Users Portfolio
 
-        double riskTolerance;
+        double riskTolerance; // Users choice for risk tolerance
     public:
-        User();
-        User(string name, Portfolio portfolio);
+        User(); // Default Constructor
+        User(string name, int userID, Portfolio* userPortfolio, double riskTolerance);
 
-        virtual double getBalance();
+        // Getters
+        string getName();
+        int getUserID();
+        double getRiskTolerance();
+        Portfolio* getUserPortfolio();
+
+        // Setters
+        void setName(string name);
+        void setUserID(int userID);
+        void setRiskTolerance(double riskTolerance);
+        void setUserPortfolio(Portfolio* userPortfolio);
 
         ~User();
 };
