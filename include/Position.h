@@ -7,7 +7,7 @@ using namespace std;
 #include "Stocks.h"
 
 class Position: public Portfolio{
-
+    
 };
 
 #endif

@@ -1,19 +1,22 @@
-.PHONY: all build run clean
+# --- Simple SFML Makefile (SFML 3 + pkg-config) ---
+CXX      := clang++
+CXXFLAGS := -std=c++17 -Wall -Wextra -Iinclude $(shell pkg-config --cflags sfml-graphics)
+LDFLAGS  := $(shell pkg-config --libs sfml-graphics)
 
-all: build
+# Usage:
+#   make build SRCS="src/main.cpp src/Dashboard.cpp" OUT=dashboard
+#   make run   SRCS="src/main.cpp src/Dashboard.cpp" OUT=dashboard
+# Defaults:
+SRCS ?= src/main.cpp
+OUT  ?= app
+
+.PHONY: build run clean
 
 build:
-	rm -rf build
-	cmake -S . -B build
-	cmake --build build
+	$(CXX) $(CXXFLAGS) $(SRCS) -o $(OUT) $(LDFLAGS)
 
 run: build
-	./build/main
+	./$(OUT)
 
 clean:
-	rm -rf build
-
-
-user: main-user.cpp Stocks.cpp Portfolio.cpp User.cpp
-	g++ main-user.cpp Stocks.cpp Portfolio.cpp User.cpp
-	./a.out
+	rm -f $(OUT)

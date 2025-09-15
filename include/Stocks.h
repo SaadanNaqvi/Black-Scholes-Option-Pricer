@@ -3,6 +3,7 @@
 
 #include <string>
 #include <iostream>
+#include <vector>
 using namespace std;
 
 struct dailyStock{
@@ -18,12 +19,9 @@ class Stocks{
     private:
         string ticker;
         vector<dailyStock> pastPrices;
-        
     public:
         Stocks();
         Stocks(string ticker, double currentPrice, double openPrice, double closePrice, double highPrice, double lowPrice, long long volume);
-
-
 };
 
 #endif
