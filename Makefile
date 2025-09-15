@@ -1,16 +1,21 @@
-# --- Simple SFML Makefile (SFML 3 + pkg-config) ---
-CXX      := clang++
-CXXFLAGS := -std=c++17 -Wall -Wextra -Iinclude $(shell pkg-config --cflags sfml-graphics)
-LDFLAGS  := $(shell pkg-config --libs sfml-graphics)
+# ---- Simple Makefile for ad-hoc builds with SFML 3 ----
+CXX := clang++
 
-# Usage:
-#   make build SRCS="src/main.cpp src/Dashboard.cpp" OUT=dashboard
-#   make run   SRCS="src/main.cpp src/Dashboard.cpp" OUT=dashboard
-# Defaults:
+# Strip any trailing whitespace/newlines from brew --prefix
+HB  := $(strip $(shell brew --prefix))
+
+CXXFLAGS := -std=c++17 -Wall -Wextra -Iinclude -I$(HB)/include
+LDFLAGS  := -L$(HB)/lib -lsfml-graphics -lsfml-window -lsfml-system \
+            -framework Cocoa -framework IOKit -framework CoreVideo -framework OpenGL \
+            -Wl,-rpath,$(HB)/lib
+
+# Pass files at call time:
+#   make build SRCS="src/main-dashboard.cpp src/Dashboard.cpp" OUT=dashboard
+#   make run   SRCS="src/main-dashboard.cpp src/Dashboard.cpp" OUT=dashboard
 SRCS ?= src/main.cpp
 OUT  ?= app
 
-.PHONY: build run clean
+.PHONY: build run clean print
 
 build:
 	$(CXX) $(CXXFLAGS) $(SRCS) -o $(OUT) $(LDFLAGS)
@@ -20,3 +25,8 @@ run: build
 
 clean:
 	rm -f $(OUT)
+
+print:
+	@echo HB='$(HB)'
+	@echo CXXFLAGS='$(CXXFLAGS)'
+	@echo LDFLAGS='$(LDFLAGS)'

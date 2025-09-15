@@ -2,7 +2,7 @@
 
 Dashboard::Dashboard() : window(sf::VideoMode{sf::Vector2u{800u, 600u}}, "Dashboard") , shape(50.f)
 {
-    shape.setFillColor(sf::Color::Green);
+    shape.setFillColor(sf::Color::Blue);
     window.setFramerateLimit(60);
 }
 
