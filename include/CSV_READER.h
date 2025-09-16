@@ -7,6 +7,9 @@ using namespace std;
 class CSV_DATA {
  private:
   map<string, vector<double>> allData;
+  vector<string> header;
+  string ticker;
+  int colSize;
 
  protected:
  public:
