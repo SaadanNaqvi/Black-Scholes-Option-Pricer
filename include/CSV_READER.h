@@ -17,13 +17,16 @@ class CSV_DATA {
   CSV_DATA(string name);
   std::string get_Name();
   std::time_t get_Date();
-  double get_currentPrice();
-  double get_openPrice();
-  double get_closePrice();
-  double get_highPrice();
-  double get_lowPrice();
-  long long get_Volume();
+  double currentPrice(string date);
+  double openPrice(string date);
+  double closePrice(string date);
+  double highPrice(string date);
+  double lowPrice(string date);
+  long long volume(string date);
+  double adjPrice(string date);
   map<string, vector<double>> get_allData();
+  vector<string> get_header();
+  string get_ticker();
 };
 
 #endif

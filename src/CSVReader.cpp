@@ -57,3 +57,14 @@ CSV_DATA::CSV_DATA(string ticker) {
   this->allData = allData;
   colSize = header.size();
 }
+
+map<string, vector<double>> CSV_DATA::get_allData() { return this->allData; }
+double CSV_DATA::openPrice(string date) { return allData[date][0]; }
+double CSV_DATA::highPrice(string date) { return allData[date][1]; }
+double CSV_DATA::lowPrice(string date) { return allData[date][2]; }
+double CSV_DATA::closePrice(string date) { return allData[date][3]; }
+double CSV_DATA::adjPrice(string date) { return allData[date][4]; }
+double CSV_DATA::currentPrice(string date) { return allData[date][5]; }
+long long CSV_DATA::volume(string date) { return allData[date][6]; }
+vector<string> CSV_DATA::get_header() { return header; }
+string CSV_DATA::get_ticker() { return ticker; }
