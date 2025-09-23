@@ -29,7 +29,7 @@ CSV_DATA::CSV_DATA(string ticker) {
   if (!fin.is_open()) {
     // ADD THE INVALID TICKER MESSAGE LATER.
 
-    cout << "Invalid message" << endl;
+    cout << "Invalid Pathway" << endl;
     return;
   }
   // Set up the strings.
@@ -67,4 +67,12 @@ double CSV_DATA::adjPrice(string date) { return allData[date][4]; }
 double CSV_DATA::currentPrice(string date) { return allData[date][5]; }
 long long CSV_DATA::volume(string date) { return allData[date][6]; }
 vector<string> CSV_DATA::get_header() { return header; }
+vector<string> CSV_DATA::get_dates() {
+  vector<string> dates;
+  for (auto [x, y] : allData) {
+    dates.push_back(x);
+  }
+  return dates;
+}
+
 string CSV_DATA::get_ticker() { return ticker; }
