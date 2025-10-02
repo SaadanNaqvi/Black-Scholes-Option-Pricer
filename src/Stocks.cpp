@@ -15,7 +15,7 @@ Stocks::Stocks(string ticker, double currentPrice, double openPrice,
                double closePrice, double highPrice, double lowPrice,
                long long volume) {
   this->ticker = ticker;
-  this->currentPirce = currentPrice;
+  this->currentPrice = currentPrice;
   this->openPrice = openPrice;
   this->closePrice = closePrice;
   this->highPrice = highPrice;
