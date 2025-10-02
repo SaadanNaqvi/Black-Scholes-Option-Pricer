@@ -6,7 +6,7 @@
 #include <vector>
 using namespace std;
 
-struct dailyStock{
+struct stockData{
     double currentPirce;
     double openPrice;
     double closePrice;
@@ -18,7 +18,7 @@ struct dailyStock{
 class Stocks{
     private:
         string ticker;
-        vector<dailyStock> pastPrices;
+        vector<stockData> pastPrices;
     public:
         Stocks();
         Stocks(string ticker, double currentPrice, double openPrice, double closePrice, double highPrice, double lowPrice, long long volume);
