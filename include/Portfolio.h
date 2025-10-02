@@ -11,10 +11,8 @@
 
 using namespace std;
 
-class Portfolio{
+class Portfolio: public User{
     private:
-        int portfolioID;  
-
         unordered_map<string, Position*> positions; // Open Positions in stocks/options
         Order* orders; // Ordering a stock
     protected:
@@ -23,7 +21,7 @@ class Portfolio{
     public:
         Portfolio();
 
-        // getters
+        //Getters
         double getBalance();
 
         double calcPortfolioValue(); // Cash Balance + Positions
