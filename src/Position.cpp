@@ -18,7 +18,7 @@ Position::Position() : Stocks() {
 }
 
 // Constructor with stock data and position info
-Position::Position(const string& ticker, const string& companyName, double currentPrice, 
+Position::Position(string ticker, string companyName, double currentPrice, 
                   PositionType type, int quantity, double entryPrice) 
     : Stocks(ticker, companyName, currentPrice, currentPrice, currentPrice, currentPrice, currentPrice, 1000) {
     this->positionId = generateId("POS");
@@ -33,7 +33,7 @@ Position::Position(const string& ticker, const string& companyName, double curre
 }
 
 // Constructor copying from existing stock
-Position::Position(const Stocks& stock, PositionType type, int quantity, double entryPrice) 
+Position::Position(Stocks stock, PositionType type, int quantity, double entryPrice) 
     : Stocks(stock) {
     this->positionId = generateId("POS");
     this->type = type;
@@ -80,7 +80,7 @@ double Position::getUnrealizedPnL() const {
 }
 
 // Position-specific setters
-void Position::setPositionId(const string& positionId) {
+void Position::setPositionId(string positionId) {
     this->positionId = positionId;
 }
 

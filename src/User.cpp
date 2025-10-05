@@ -97,19 +97,19 @@ double User::getTotalInvestmentCapital() const {
 }
 
 // Setters
-void User::setUserId(const string& userId) {
+void User::setUserId(string userId) {
     this->userId = userId;
 }
 
-void User::setUserName(const string& userName) {
+void User::setUserName(string userName) {
     this->userName = userName;
 }
 
-void User::setFirstName(const string& firstName) {
+void User::setFirstName(string firstName) {
     this->firstName = firstName;
 }
 
-void User::setLastName(const string& lastName) {
+void User::setLastName(string lastName) {
     this->lastName = lastName;
 }
 
@@ -139,7 +139,7 @@ void User::addPortfolio(Portfolio* portfolio) {
     totalInvestmentCapital += portfolio->getInitialValue();
 }
 
-void User::removePortfolio(const string& portfolioId) {
+void User::removePortfolio(string portfolioId) {
     auto it = find_if(portfolios.begin(), portfolios.end(),
                      [&portfolioId](const Portfolio* p) {
                          return p->getPortfolioId() == portfolioId;
@@ -152,7 +152,7 @@ void User::removePortfolio(const string& portfolioId) {
     }
 }
 
-Portfolio* User::getPortfolio(const string& portfolioId) const {
+Portfolio* User::getPortfolio(string portfolioId) const {
     for (Portfolio* portfolio : portfolios) {
         if (portfolio->getPortfolioId() == portfolioId) {
             return portfolio;
@@ -165,7 +165,7 @@ Portfolio* User::getPrimaryPortfolio() const {
     return portfolios.empty() ? nullptr : portfolios[0];
 }
 
-bool User::hasPortfolio(const string& portfolioId) const {
+bool User::hasPortfolio(string portfolioId) const {
     return getPortfolio(portfolioId) != nullptr;
 }
 

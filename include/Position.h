@@ -27,9 +27,9 @@ class Position : public Stocks {
     public:
         // Constructors (inherit from Stocks but add position-specific data)
         Position();
-        Position(const string& ticker, const string& companyName, double currentPrice, 
+        Position(string ticker, string companyName, double currentPrice, 
                 PositionType type, int quantity, double entryPrice);
-        Position(const Stocks& stock, PositionType type, int quantity, double entryPrice);
+        Position(Stocks stock, PositionType type, int quantity, double entryPrice);
         
         // Virtual destructor for further inheritance
         virtual ~Position();
@@ -45,7 +45,7 @@ class Position : public Stocks {
         double getUnrealizedPnL() const;
         
         // Position-specific setters
-        void setPositionId(const string& positionId);
+        void setPositionId(string positionId);
         void setQuantity(int quantity);
         void setEntryPrice(double entryPrice);
         

@@ -89,15 +89,15 @@ time_t Stocks::getCreationTime() const {
 }
 
 // Setters
-void Stocks::setTicker(const string& ticker) {
+void Stocks::setTicker(string ticker) {
     this->ticker = ticker;
 }
 
-void Stocks::setCompanyName(const string& companyName) {
+void Stocks::setCompanyName(string companyName) {
     this->companyName = companyName;
 }
 
-void Stocks::setInstrumentId(const string& id) {
+void Stocks::setInstrumentId(string id) {
     this->instrumentId = id;
 }
 

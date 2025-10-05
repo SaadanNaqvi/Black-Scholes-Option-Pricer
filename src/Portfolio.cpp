@@ -17,7 +17,7 @@ Portfolio::Portfolio() : Position() {
 }
 
 // Constructor with basic portfolio info
-Portfolio::Portfolio(const string& portfolioId, const string& ownerId, double initialCash) 
+Portfolio::Portfolio(string portfolioId, string ownerId, double initialCash) 
     : Position() {  // Call Position default constructor
     this->portfolioId = portfolioId;
     this->ownerId = ownerId;
@@ -29,8 +29,8 @@ Portfolio::Portfolio(const string& portfolioId, const string& ownerId, double in
 }
 
 // Constructor with portfolio and initial position
-Portfolio::Portfolio(const string& portfolioId, const string& ownerId, const string& ticker, 
-                    const string& companyName, double currentPrice, PositionType type, 
+Portfolio::Portfolio(string portfolioId, string ownerId, string ticker, 
+                    string companyName, double currentPrice, PositionType type, 
                     int quantity, double entryPrice, double initialCash)
     : Position(ticker, companyName, currentPrice, type, quantity, entryPrice) {
     this->portfolioId = portfolioId;
@@ -80,12 +80,12 @@ time_t Portfolio::getLastUpdated() const {
 }
 
 // Setters
-void Portfolio::setPortfolioId(const string& portfolioId) {
+void Portfolio::setPortfolioId(string portfolioId) {
     this->portfolioId = portfolioId;
     lastUpdated = time(0);
 }
 
-void Portfolio::setOwnerId(const string& ownerId) {
+void Portfolio::setOwnerId(string ownerId) {
     this->ownerId = ownerId;
     lastUpdated = time(0);
 }
@@ -151,7 +151,7 @@ void Portfolio::addPosition(Position* position) {
     lastUpdated = time(0);
 }
 
-void Portfolio::removePosition(const string& ticker) {
+void Portfolio::removePosition(string ticker) {
     auto it = positions.find(ticker);
     if (it != positions.end()) {
         delete it->second;
@@ -160,12 +160,12 @@ void Portfolio::removePosition(const string& ticker) {
     }
 }
 
-Position* Portfolio::getPosition(const string& ticker) const {
+Position* Portfolio::getPosition(string ticker) const {
     auto it = positions.find(ticker);
     return (it != positions.end()) ? it->second : nullptr;
 }
 
-bool Portfolio::hasPosition(const string& ticker) const {
+bool Portfolio::hasPosition(string ticker) const {
     return positions.find(ticker) != positions.end();
 }
 
@@ -183,7 +183,7 @@ void Portfolio::addOrder(Order* order) {
     lastUpdated = time(0);
 }
 
-void Portfolio::cancelOrder(const string& orderId) {
+void Portfolio::cancelOrder(string orderId) {
     for (Order* order : orders) {
         if (order->getOrderId() == orderId) {
             order->cancelOrder();
@@ -193,7 +193,7 @@ void Portfolio::cancelOrder(const string& orderId) {
     lastUpdated = time(0);
 }
 
-Order* Portfolio::getOrder(const string& orderId) const {
+Order* Portfolio::getOrder(string orderId) const {
     for (Order* order : orders) {
         if (order->getOrderId() == orderId) {
             return order;
@@ -341,12 +341,12 @@ void Portfolio::addToWatchlist(Stocks* stock) {
     lastUpdated = time(0);
 }
 
-void Portfolio::removeFromWatchlist(const string& ticker) {
+void Portfolio::removeFromWatchlist(string ticker) {
     watchlist.erase(ticker);
     lastUpdated = time(0);
 }
 
-bool Portfolio::isInWatchlist(const string& ticker) const {
+bool Portfolio::isInWatchlist(string ticker) const {
     return watchlist.find(ticker) != watchlist.end();
 }
 
@@ -370,7 +370,7 @@ unordered_map<string, double> Portfolio::getAssetAllocation() const {
     return allocation;
 }
 
-double Portfolio::getPositionWeight(const string& ticker) const {
+double Portfolio::getPositionWeight(string ticker) const {
     if (!hasPosition(ticker)) return 0.0;
     
     double totalValue = calculateTotalValue();

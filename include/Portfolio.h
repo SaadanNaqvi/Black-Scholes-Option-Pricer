@@ -30,9 +30,9 @@ class Portfolio : public Position {
     public:
         // Constructors - inherit from Position chain
         Portfolio();
-        Portfolio(const string& portfolioId, const string& ownerId, double initialCash);
-        Portfolio(const string& portfolioId, const string& ownerId, const string& ticker, 
-                 const string& companyName, double currentPrice, PositionType type, 
+        Portfolio(string portfolioId, string ownerId, double initialCash);
+        Portfolio(string portfolioId, string ownerId, string ticker, 
+                 string companyName, double currentPrice, PositionType type, 
                  int quantity, double entryPrice, double initialCash);
         
         // Virtual destructor
@@ -50,8 +50,8 @@ class Portfolio : public Position {
         time_t getLastUpdated() const;
         
         // Portfolio-specific setters
-        void setPortfolioId(const string& portfolioId);
-        void setOwnerId(const string& ownerId);
+        void setPortfolioId(string portfolioId);
+        void setOwnerId(string ownerId);
         void setCashBalance(double balance);
         
         // Override virtual methods from Position/Stocks
@@ -63,15 +63,15 @@ class Portfolio : public Position {
         
         // Position management
         void addPosition(Position* position);
-        void removePosition(const string& ticker);
-        Position* getPosition(const string& ticker) const;
-        bool hasPosition(const string& ticker) const;
+        void removePosition(string ticker);
+        Position* getPosition(string ticker) const;
+        bool hasPosition(string ticker) const;
         void updatePositions();
         
         // Order management
         void addOrder(Order* order);
-        void cancelOrder(const string& orderId);
-        Order* getOrder(const string& orderId) const;
+        void cancelOrder(string orderId);
+        Order* getOrder(string orderId) const;
         vector<Order*> getPendingOrders() const;
         vector<Order*> getFilledOrders() const;
         void processOrders();
@@ -92,12 +92,12 @@ class Portfolio : public Position {
         
         // Watchlist management
         void addToWatchlist(Stocks* stock);
-        void removeFromWatchlist(const string& ticker);
-        bool isInWatchlist(const string& ticker) const;
+        void removeFromWatchlist(string ticker);
+        bool isInWatchlist(string ticker) const;
         
         // Portfolio analysis
         unordered_map<string, double> getAssetAllocation() const;
-        double getPositionWeight(const string& ticker) const;
+        double getPositionWeight(string ticker) const;
         vector<Position*> getTopPositions(int count = 5) const;
         double calculatePortfolioBeta() const;
         double calculateSharpeRatio() const;

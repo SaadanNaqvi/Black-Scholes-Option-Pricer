@@ -54,9 +54,9 @@ class Stocks {
         time_t getCreationTime() const;
         
         // Setters
-        void setTicker(const string& ticker);
-        void setCompanyName(const string& companyName);
-        void setInstrumentId(const string& id);
+        void setTicker(string ticker);
+        void setCompanyName(string companyName);
+        void setInstrumentId(string id);
         void setBaseValue(double value);
         virtual void updateCurrentPrice(double price);  // Virtual for override
         void updateStockData(double currentPrice, double openPrice, double closePrice, 

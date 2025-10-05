@@ -53,20 +53,20 @@ class User {
         double getTotalInvestmentCapital() const;
         
         // Setters
-        void setUserId(const string& userId);
-        void setUserName(const string& userName);
-        void setFirstName(const string& firstName);
-        void setLastName(const string& lastName);
+        void setUserId(string userId);
+        void setUserName(string userName);
+        void setFirstName(string firstName);
+        void setLastName(string lastName);
         void setRiskLevel(RiskLevel riskLevel);
         void setRiskTolerance(double riskTolerance);
         void setIsActive(bool isActive);
         
         // Portfolio management
         void addPortfolio(Portfolio* portfolio);
-        void removePortfolio(const string& portfolioId);
-        Portfolio* getPortfolio(const string& portfolioId) const;
+        void removePortfolio(string portfolioId);
+        Portfolio* getPortfolio(string portfolioId) const;
         Portfolio* getPrimaryPortfolio() const;
-        bool hasPortfolio(const string& portfolioId) const;
+        bool hasPortfolio(string portfolioId) const;
         
         // User account management
         void updateLastLogin();
