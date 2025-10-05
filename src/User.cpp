@@ -8,7 +8,6 @@ using namespace std;
 User::User() {
     userId = "";
     userName = "";
-    email = "";
     firstName = "";
     lastName = "";
     riskLevel = MODERATE;
@@ -20,10 +19,9 @@ User::User() {
 }
 
 // Basic constructor
-User::User(string userId, string userName, string email, string firstName, string lastName) {
+User::User(string userId, string userName, string firstName, string lastName) {
     this->userId = userId;
     this->userName = userName;
-    this->email = email;
     this->firstName = firstName;
     this->lastName = lastName;
     this->riskLevel = MODERATE;
@@ -35,11 +33,10 @@ User::User(string userId, string userName, string email, string firstName, strin
 }
 
 // Full constructor
-User::User(string userId, string userName, string email, string firstName, string lastName, 
+User::User(string userId, string userName, string firstName, string lastName, 
            RiskLevel riskLevel, double riskTolerance) {
     this->userId = userId;
     this->userName = userName;
-    this->email = email;
     this->firstName = firstName;
     this->lastName = lastName;
     this->riskLevel = riskLevel;
@@ -57,10 +54,6 @@ string User::getUserId() const {
 
 string User::getUserName() const {
     return userName;
-}
-
-string User::getEmail() const {
-    return email;
 }
 
 string User::getFirstName() const {
@@ -110,10 +103,6 @@ void User::setUserId(const string& userId) {
 
 void User::setUserName(const string& userName) {
     this->userName = userName;
-}
-
-void User::setEmail(const string& email) {
-    this->email = email;
 }
 
 void User::setFirstName(const string& firstName) {
@@ -269,7 +258,6 @@ void User::printUserProfile() const {
     cout << "User ID: " << userId << endl;
     cout << "Username: " << userName << endl;
     cout << "Full Name: " << getFullName() << endl;
-    cout << "Email: " << email << endl;
     cout << "Risk Level: " << getRiskLevelString() << endl;
     cout << "Risk Tolerance: " << fixed << setprecision(1) << riskTolerance << "%" << endl;
     cout << "Account Status: " << (isActive ? "Active" : "Inactive") << endl;

@@ -21,7 +21,6 @@ class User {
     private:
         string userId;
         string userName;
-        string email;
         string firstName;
         string lastName;
         vector<Portfolio*> portfolios; // User can have multiple portfolios
@@ -35,14 +34,13 @@ class User {
     public:
         // Constructors
         User();
-        User(string userId, string userName, string email, string firstName, string lastName);
-        User(string userId, string userName, string email, string firstName, string lastName, 
+        User(string userId, string userName, string firstName, string lastName);
+        User(string userId, string userName, string firstName, string lastName, 
              RiskLevel riskLevel, double riskTolerance);
         
         // Getters
         string getUserId() const;
         string getUserName() const;
-        string getEmail() const;
         string getFirstName() const;
         string getLastName() const;
         string getFullName() const;
@@ -57,7 +55,6 @@ class User {
         // Setters
         void setUserId(const string& userId);
         void setUserName(const string& userName);
-        void setEmail(const string& email);
         void setFirstName(const string& firstName);
         void setLastName(const string& lastName);
         void setRiskLevel(RiskLevel riskLevel);
