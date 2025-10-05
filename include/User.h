@@ -1,34 +1,100 @@
 #ifndef USER_H
 #define USER_H
 
-#include <string>
-using namespace std;
 #include "Portfolio.h"
+#include "Order.h"
+#include "Position.h"
+#include "Stocks.h"
+#include <string>
+#include <vector>
+#include <ctime>
+using namespace std;
 
-class User{
+enum RiskLevel {
+    CONSERVATIVE,
+    MODERATE,
+    AGGRESSIVE,
+    VERY_AGGRESSIVE
+};
+
+class User {
     private:
-        string name; // User name
-        int userID; 
-
-        Portfolio* userPortfolio; // Users Portfolio
-
-        double riskTolerance; // Users choice for risk tolerance
+        string userId;
+        string userName;
+        string email;
+        string firstName;
+        string lastName;
+        vector<Portfolio*> portfolios; // User can have multiple portfolios
+        RiskLevel riskLevel;
+        double riskTolerance; // Numerical risk tolerance (0-100)
+        time_t registrationDate;
+        time_t lastLoginDate;
+        bool isActive;
+        double totalInvestmentCapital;
+        
     public:
-        User(); // Default Constructor
-        User(string name, int userID, Portfolio* userPortfolio, double riskTolerance);
-
+        // Constructors
+        User();
+        User(string userId, string userName, string email, string firstName, string lastName);
+        User(string userId, string userName, string email, string firstName, string lastName, 
+             RiskLevel riskLevel, double riskTolerance);
+        
         // Getters
-        string getName();
-        int getUserID();
-        double getRiskTolerance();
-        Portfolio* getUserPortfolio();
-
+        string getUserId() const;
+        string getUserName() const;
+        string getEmail() const;
+        string getFirstName() const;
+        string getLastName() const;
+        string getFullName() const;
+        vector<Portfolio*> getPortfolios() const;
+        RiskLevel getRiskLevel() const;
+        double getRiskTolerance() const;
+        time_t getRegistrationDate() const;
+        time_t getLastLoginDate() const;
+        bool getIsActive() const;
+        double getTotalInvestmentCapital() const;
+        
         // Setters
-        void setName(string name);
-        void setUserID(int userID);
+        void setUserId(const string& userId);
+        void setUserName(const string& userName);
+        void setEmail(const string& email);
+        void setFirstName(const string& firstName);
+        void setLastName(const string& lastName);
+        void setRiskLevel(RiskLevel riskLevel);
         void setRiskTolerance(double riskTolerance);
-        void setUserPortfolio(Portfolio* userPortfolio);
-
+        void setIsActive(bool isActive);
+        
+        // Portfolio management
+        void addPortfolio(Portfolio* portfolio);
+        void removePortfolio(const string& portfolioId);
+        Portfolio* getPortfolio(const string& portfolioId) const;
+        Portfolio* getPrimaryPortfolio() const;
+        bool hasPortfolio(const string& portfolioId) const;
+        
+        // User account management
+        void updateLastLogin();
+        void activateAccount();
+        void deactivateAccount();
+        
+        // Financial calculations
+        double calculateTotalPortfolioValue() const;
+        double calculateTotalCashBalance() const;
+        double calculateTotalUnrealizedPnL() const;
+        double calculateTotalRealizedPnL() const;
+        double calculateOverallReturn() const;
+        
+        // Risk management
+        string getRiskLevelString() const;
+        bool isRiskToleranceExceeded(double portfolioRisk) const;
+        double getRecommendedMaxPositionSize(double portfolioValue) const;
+        
+        // Utility functions
+        void printUserProfile() const;
+        void printPortfolioSummary() const;
+        vector<Position*> getAllPositions() const;
+        vector<Order*> getAllOrders() const;
+        
+        // Destructor
         ~User();
 };
 

@@ -1,0 +1,115 @@
+# Makefile for Black-Scholes Option Pricer
+# 3-Layer Architecture: Stocks (Data) -> Position/Order (Business) -> Portfolio/User (Interface)
+
+CXX = g++
+CXXFLAGS = -std=c++11 -Wall -Wextra -I include
+SRCDIR = src
+INCDIR = include
+OBJDIR = obj
+BINDIR = bin
+
+# Source files for the 3-layer architecture
+ARCH_SOURCES = $(SRCDIR)/Stocks.cpp $(SRCDIR)/Position.cpp $(SRCDIR)/Order.cpp $(SRCDIR)/Portfolio.cpp $(SRCDIR)/User.cpp
+ARCH_OBJECTS = $(ARCH_SOURCES:$(SRCDIR)/%.cpp=$(OBJDIR)/%.o)
+
+# Main program sources
+EXAMPLE_SOURCE = $(SRCDIR)/example_usage.cpp
+USER_SOURCE = $(SRCDIR)/main-user.cpp
+DASHBOARD_SOURCE = $(SRCDIR)/main-dashboard.cpp
+
+# Executables
+EXAMPLE_EXEC = $(BINDIR)/example_program
+USER_EXEC = $(BINDIR)/user_program
+DASHBOARD_EXEC = $(BINDIR)/dashboard_program
+
+.PHONY: all clean example user dashboard dirs help
+
+all: example
+
+example: dirs $(EXAMPLE_EXEC)
+
+user: dirs $(USER_EXEC)
+
+dashboard: dirs $(DASHBOARD_EXEC)
+
+# Create directories if they don't exist
+dirs:
+	@mkdir -p $(OBJDIR) $(BINDIR)
+
+# Example program (demonstrates 3-layer architecture)
+$(EXAMPLE_EXEC): $(OBJDIR)/example_usage.o $(ARCH_OBJECTS)
+	$(CXX) $(CXXFLAGS) $^ -o $@
+	@echo "✓ Built example program demonstrating 3-layer architecture"
+
+# User program (if it exists)
+$(USER_EXEC): $(OBJDIR)/main-user.o $(ARCH_OBJECTS)
+	$(CXX) $(CXXFLAGS) $^ -o $@
+	@echo "✓ Built user program"
+
+# Dashboard program (if it exists)
+$(DASHBOARD_EXEC): $(OBJDIR)/main-dashboard.o $(ARCH_OBJECTS)
+	$(CXX) $(CXXFLAGS) $^ -o $@
+	@echo "✓ Built dashboard program"
+
+# Object files
+$(OBJDIR)/%.o: $(SRCDIR)/%.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+# Dependencies (showing the layer structure)
+$(OBJDIR)/Stocks.o: $(INCDIR)/Stocks.h
+$(OBJDIR)/Position.o: $(INCDIR)/Position.h $(INCDIR)/Stocks.h
+$(OBJDIR)/Order.o: $(INCDIR)/Order.h $(INCDIR)/Stocks.h $(INCDIR)/Position.h
+$(OBJDIR)/Portfolio.o: $(INCDIR)/Portfolio.h $(INCDIR)/Position.h $(INCDIR)/Order.h $(INCDIR)/Stocks.h
+$(OBJDIR)/User.o: $(INCDIR)/User.h $(INCDIR)/Portfolio.h
+$(OBJDIR)/example_usage.o: $(INCDIR)/User.h $(INCDIR)/Portfolio.h $(INCDIR)/Position.h $(INCDIR)/Order.h $(INCDIR)/Stocks.h
+
+# Test the example program
+test: example
+	@echo "Running 3-layer architecture demo..."
+	@echo "===================================="
+	./$(EXAMPLE_EXEC)
+
+# Quick compile for testing (without directories)
+quick:
+	$(CXX) $(CXXFLAGS) -o example_program $(ARCH_SOURCES) $(EXAMPLE_SOURCE)
+	@echo "✓ Quick build complete"
+
+# Clean up
+clean:
+	rm -rf $(OBJDIR) $(BINDIR) example_program
+	@echo "✓ Cleaned build files"
+
+# Help
+help:
+	@echo "Black-Scholes Option Pricer - 3-Layer Architecture Build System"
+	@echo "================================================================"
+	@echo ""
+	@echo "Available targets:"
+	@echo "  all       - Build the example program (default)"
+	@echo "  example   - Build the 3-layer architecture demonstration"
+	@echo "  user      - Build the user program (if available)"
+	@echo "  dashboard - Build the dashboard program (if available)"
+	@echo "  test      - Build and run the example program"
+	@echo "  quick     - Quick compile without directory structure"
+	@echo "  clean     - Remove all build files"
+	@echo "  help      - Show this help message"
+	@echo ""
+	@echo "Architecture Overview:"
+	@echo "  Layer 1 (Data Layer):      Stocks class"
+	@echo "    - Handles stock data storage and calculations"
+	@echo "    - Manages price history and volatility calculations"
+	@echo ""
+	@echo "  Layer 2 (Business Layer):  Position and Order classes"
+	@echo "    - Position: Manages individual stock positions"
+	@echo "    - Order: Handles buy/sell orders and execution logic"
+	@echo "    - Both depend on Stocks from Layer 1"
+	@echo ""
+	@echo "  Layer 3 (Interface Layer): Portfolio and User classes"
+	@echo "    - Portfolio: Manages collections of positions and orders"
+	@echo "    - User: Handles user accounts and multiple portfolios"
+	@echo "    - Depends on all lower layers"
+	@echo ""
+	@echo "Usage:"
+	@echo "  make -f Makefile.architecture        # Build example program"
+	@echo "  make -f Makefile.architecture test   # Build and run demo"
+	@echo "  make -f Makefile.architecture clean  # Clean build files"
