@@ -11,7 +11,7 @@ class CSV_DATA{
     vector<string> header;
     int colSize=0;
   protected:
-    
+  
   public:
     CSV_DATA();
     CSV_DATA(string ticker); //Done.
