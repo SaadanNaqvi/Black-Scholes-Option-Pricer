@@ -1,6 +1,6 @@
 #include <bits/stdc++.h>
 
-#include "../include/CSV_READER.h"
+#include "../include/CSVDatag.h"
 
 // GEt's the header.
 vector<string> functionReader(const stringstream& s) {
@@ -15,9 +15,9 @@ vector<string> functionReader(const stringstream& s) {
   return row;
 }
 
-CSV_DATA::CSV_DATA() {}
+CSVData::CSVData() {}
 
-CSV_DATA::CSV_DATA(string ticker) {
+CSVData::CSVData(string ticker) {
   // Set up filestream.
   fstream fin;
   this->ticker = ticker;
@@ -29,7 +29,7 @@ CSV_DATA::CSV_DATA(string ticker) {
   if (!fin.is_open()) {
     // ADD THE INVALID TICKER MESSAGE LATER.
 
-    cout << "Invalid message" << endl;
+    cout << "Invalid Pathway" << endl;
     return;
   }
   // Set up the strings.
@@ -58,13 +58,21 @@ CSV_DATA::CSV_DATA(string ticker) {
   colSize = header.size();
 }
 
-map<string, vector<double>> CSV_DATA::get_allData() { return this->allData; }
-double CSV_DATA::openPrice(string date) { return allData[date][0]; }
-double CSV_DATA::highPrice(string date) { return allData[date][1]; }
-double CSV_DATA::lowPrice(string date) { return allData[date][2]; }
-double CSV_DATA::closePrice(string date) { return allData[date][3]; }
-double CSV_DATA::adjPrice(string date) { return allData[date][4]; }
-double CSV_DATA::currentPrice(string date) { return allData[date][5]; }
-long long CSV_DATA::volume(string date) { return allData[date][6]; }
-vector<string> CSV_DATA::get_header() { return header; }
-string CSV_DATA::get_ticker() { return ticker; }
+map<string, vector<double>> CSVData::get_allData() { return this->allData; }
+double CSVData::openPrice(string date) { return allData[date][0]; }
+double CSVData::highPrice(string date) { return allData[date][1]; }
+double CSVData::lowPrice(string date) { return allData[date][2]; }
+double CSVData::closePrice(string date) { return allData[date][3]; }
+double CSVData::adjPrice(string date) { return allData[date][4]; }
+double CSVData::currentPrice(string date) { return allData[date][5]; }
+long long CSVData::volume(string date) { return allData[date][6]; }
+vector<string> CSVData::get_header() { return header; }
+vector<string> CSVData::get_dates() {
+  vector<string> dates;
+  for (auto [x, y] : allData) {
+    dates.push_back(x);
+  }
+  return dates;
+}
+
+string CSVData::get_ticker() { return ticker; }
