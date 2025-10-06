@@ -27,6 +27,7 @@ class CSV_DATA {
   map<string, vector<double>> get_allData();
   vector<string> get_header();
   string get_ticker();
+  vector<string> get_dates();
 };
 
 #endif
