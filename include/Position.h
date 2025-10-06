@@ -22,13 +22,12 @@ class Position : public Stocks {
         time_t openDate;        // When position was opened
         time_t lastUpdated;     // Last time position was updated
         bool isOpen;           // Whether position is still open
-        double unrealizedPnL;   // Cached P&L calculation
+        double unrealisedPnL;   // Cached P&L calculation
         
     public:
         // Constructors (inherit from Stocks but add position-specific data)
         Position();
-        Position(string ticker, string companyName, double currentPrice, 
-                PositionType type, int quantity, double entryPrice);
+        Position(string ticker, string companyName, double currentPrice, PositionType type, int quantity, double entryPrice);
         Position(Stocks stock, PositionType type, int quantity, double entryPrice);
         
         // Virtual destructor for further inheritance
@@ -42,7 +41,7 @@ class Position : public Stocks {
         time_t getOpenDate() const;
         time_t getLastUpdated() const;
         bool getIsOpen() const;
-        double getUnrealizedPnL() const;
+        double getUnrealisedPnL() const;
         
         // Position-specific setters
         void setPositionId(string positionId);
@@ -58,11 +57,11 @@ class Position : public Stocks {
         
         // Position-specific methods
         void updatePositionValue();
-        double calculateUnrealizedPnL() const;
-        double calculateRealizedPnL(double closePrice) const;
+        double calculateUnrealisedPnL() const;
+        double calculateRealisedPnL(double closePrice) const;
         void closePosition(double closePrice);
         void addToPosition(int additionalQuantity, double newEntryPrice);
-        void reducePosition(int quantityToReduce, double exitPrice);
+        void reducePosition();
         
         // Utility functions
         double getPositionValue() const;

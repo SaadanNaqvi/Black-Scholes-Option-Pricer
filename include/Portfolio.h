@@ -31,9 +31,7 @@ class Portfolio : public Position {
         // Constructors - inherit from Position chain
         Portfolio();
         Portfolio(string portfolioId, string ownerId, double initialCash);
-        Portfolio(string portfolioId, string ownerId, string ticker, 
-                 string companyName, double currentPrice, PositionType type, 
-                 int quantity, double entryPrice, double initialCash);
+        Portfolio(string portfolioId, string ownerId, string ticker,  string companyName, double currentPrice, PositionType type, int quantity, double entryPrice, double initialCash);
         
         // Virtual destructor
         virtual ~Portfolio();
@@ -85,8 +83,8 @@ class Portfolio : public Position {
         double calculateTotalValue() const;
         double calculatePositionsValue() const;
         double calculateTotalPnL() const;
-        double calculateUnrealizedPnL() const;
-        double calculateRealizedPnL() const;
+        double calculateUnrealisedPnL() const;
+        double calculateRealisedPnL() const;
         double calculateDayChange() const;
         double calculateTotalReturn() const;
         

@@ -32,8 +32,7 @@ class Stocks {
         // Constructors
         Stocks();
         Stocks(string ticker, string companyName = "");
-        Stocks(string ticker, string companyName, double currentPrice, double openPrice, 
-               double closePrice, double highPrice, double lowPrice, long long volume);
+        Stocks(string ticker, string companyName, double currentPrice, double openPrice, double closePrice, double highPrice, double lowPrice, long long volume);
         
         // Virtual destructor for proper inheritance
         virtual ~Stocks();
@@ -59,8 +58,7 @@ class Stocks {
         void setInstrumentId(string id);
         void setBaseValue(double value);
         virtual void updateCurrentPrice(double price);  // Virtual for override
-        void updateStockData(double currentPrice, double openPrice, double closePrice, 
-                            double highPrice, double lowPrice, long long volume);
+        void updateStockData(double currentPrice, double openPrice, double closePrice, double highPrice, double lowPrice, long long volume);
         
         // Virtual methods for inheritance hierarchy
         virtual double calculateValue() const;           // Base calculation method
@@ -69,13 +67,13 @@ class Stocks {
         virtual string getClassType() const;             // Get class type string
         
         // Utility functions
-        void addHistoricalData(const stockData& data);
+        void addHistoricalData(stockData data);
         double calculateDailyReturn() const;
         double calculateVolatility() const;
         void printStockInfo() const;
         
         // Static helper for creating IDs
-        static string generateId(const string& prefix);
+        static string generateId(string prefix);
 };
 
 #endif

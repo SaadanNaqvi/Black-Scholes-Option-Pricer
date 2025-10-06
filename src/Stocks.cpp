@@ -120,7 +120,7 @@ void Stocks::updateStockData(double currentPrice, double openPrice, double close
 }
 
 // Utility functions
-void Stocks::addHistoricalData(const stockData& data) {
+void Stocks::addHistoricalData(stockData data) {
     priceHistory.push_back(data);
 }
 
@@ -193,10 +193,10 @@ string Stocks::getClassType() const {
 }
 
 // Static helper method
-string Stocks::generateId(const string& prefix) {
+string Stocks::generateId(string prefix) {
     static int counter = 0;
     ostringstream oss;
-    oss << prefix << "_" << ++counter;
+    oss << prefix << "_" << counter++;
     return oss.str();
 }
 

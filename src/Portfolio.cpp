@@ -298,25 +298,25 @@ double Portfolio::calculatePositionsValue() const {
 }
 
 double Portfolio::calculateTotalPnL() const {
-    return calculateUnrealizedPnL() + calculateRealizedPnL();
+    return calculateUnrealisedPnL() + calculateRealisedPnL();
 }
 
-double Portfolio::calculateUnrealizedPnL() const {
+double Portfolio::calculateUnrealisedPnL() const {
     double totalPnL = 0.0;
     for (const auto& pair : positions) {
         if (pair.second->getIsOpen()) {
-            totalPnL += pair.second->calculateUnrealizedPnL();
+            totalPnL += pair.second->calculateUnrealisedPnL();
         }
     }
     return totalPnL;
 }
 
-double Portfolio::calculateRealizedPnL() const {
+double Portfolio::calculateRealisedPnL() const {
     // This would typically come from closed positions or completed trades
     // For now, we'll calculate based on filled orders
-    double realizedPnL = 0.0;
+    double realisedPnL = 0.0;
     // Implementation would depend on tracking closed positions
-    return realizedPnL;
+    return realisedPnL;
 }
 
 double Portfolio::calculateDayChange() const {
@@ -418,7 +418,7 @@ void Portfolio::printPortfolioSummary() const {
     cout << "Positions Value: $" << calculatePositionsValue() << endl;
     cout << "Total Value: $" << calculateTotalValue() << endl;
     cout << "Total Return: " << calculateTotalReturn() << "%" << endl;
-    cout << "Unrealized P&L: $" << calculateUnrealizedPnL() << endl;
+    cout << "Unrealised P&L: $" << calculateUnrealisedPnL() << endl;
     cout << "Day Change: $" << calculateDayChange() << endl;
     cout << "Number of Positions: " << positions.size() << endl;
     cout << "Number of Orders: " << orders.size() << endl;
@@ -445,7 +445,7 @@ void Portfolio::printPositions() const {
         cout << pos->getTicker() << ": "  // Use inherited method
              << pos->getQuantity() << " shares @ $" 
              << fixed << setprecision(2) << pos->getCurrentPrice()  // Use inherited method
-             << " (P&L: $" << pos->calculateUnrealizedPnL() << ")" << endl;
+             << " (P&L: $" << pos->calculateUnrealisedPnL() << ")" << endl;
     }
 }
 

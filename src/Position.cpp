@@ -14,7 +14,7 @@ Position::Position() : Stocks() {
     openDate = time(0);
     lastUpdated = time(0);
     isOpen = false;
-    unrealizedPnL = 0.0;
+    unrealisedPnL = 0.0;
 }
 
 // Constructor with stock data and position info
@@ -28,7 +28,7 @@ Position::Position(string ticker, string companyName, double currentPrice,
     this->openDate = time(0);
     this->lastUpdated = time(0);
     this->isOpen = true;
-    this->unrealizedPnL = 0.0;
+    this->unrealisedPnL = 0.0;
     updatePositionValue();
 }
 
@@ -42,7 +42,7 @@ Position::Position(Stocks stock, PositionType type, int quantity, double entryPr
     this->openDate = time(0);
     this->lastUpdated = time(0);
     this->isOpen = true;
-    this->unrealizedPnL = 0.0;
+    this->unrealisedPnL = 0.0;
     updatePositionValue();
 }
 
@@ -75,8 +75,8 @@ bool Position::getIsOpen() const {
     return isOpen;
 }
 
-double Position::getUnrealizedPnL() const {
-    return unrealizedPnL;
+double Position::getUnrealisedPnL() const {
+    return unrealisedPnL;
 }
 
 // Position-specific setters
@@ -125,12 +125,12 @@ void Position::updateCurrentPrice(double price) {
 void Position::updatePositionValue() {
     if (isOpen) {
         currentValue = abs(quantity) * getCurrentPrice();
-        unrealizedPnL = calculateUnrealizedPnL();
+        unrealisedPnL = calculateUnrealisedPnL();
         lastUpdated = time(0);
     }
 }
 
-double Position::calculateUnrealizedPnL() const {
+double Position::calculateUnrealisedPnL() const {
     if (!isOpen) return 0.0;
     
     double currentPrice = getCurrentPrice();  // Use inherited method
@@ -213,7 +213,7 @@ void Position::printPositionDetails() const {
     cout << "Quantity: " << quantity << " shares" << endl;
     cout << "Entry Price: $" << fixed << setprecision(2) << entryPrice << endl;
     cout << "Current Value: $" << fixed << setprecision(2) << currentValue << endl;
-    cout << "Unrealized P&L: $" << fixed << setprecision(2) << calculateUnrealizedPnL() << endl;
+    cout << "Unrealized P&L: $" << fixed << setprecision(2) << calculateUnrealisedPnL() << endl;
     cout << "Status: " << (isOpen ? "OPEN" : "CLOSED") << endl;
     
     // Convert timestamps to readable format
