@@ -48,10 +48,8 @@ class Order {
     public:
         // Constructors
         Order();
-        Order(string orderId, Stocks* stock, OrderType orderType, OrderPriceType priceType, 
-              int quantity, double price, string userId);
-        Order(string orderId, Stocks* stock, OrderType orderType, OrderPriceType priceType, 
-              int quantity, double price, double stopPrice, string userId);
+        Order(string orderId, Stocks* stock, OrderType orderType, OrderPriceType priceType, int quantity, double price, string userId);
+        Order(string orderId, Stocks* stock, OrderType orderType, OrderPriceType priceType, int quantity, double price, double stopPrice, string userId);
         
         // Getters
         string getOrderId() const;

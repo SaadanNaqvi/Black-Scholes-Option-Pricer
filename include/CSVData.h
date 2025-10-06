@@ -10,13 +10,13 @@ class CSVData {
   vector<string> header;
   string ticker;
   int colSize;
-
+  
  protected:
  public:
   CSVData();
   CSVData(string name);
-  std::string get_Name();
-  std::time_t get_Date();
+  std::string getName();
+  std::time_t getDate();
   double currentPrice(string date);
   double openPrice(string date);
   double closePrice(string date);
@@ -24,10 +24,10 @@ class CSVData {
   double lowPrice(string date);
   long long volume(string date);
   double adjPrice(string date);
-  map<string, vector<double>> get_allData();
-  vector<string> get_header();
-  string get_ticker();
-  vector<string> get_dates();
+  map<string, vector<double>> getAllData();
+  vector<string> getHeader();
+  string getTicker();
+  vector<string> getDates();
 };
 
 #endif
