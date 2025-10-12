@@ -1,399 +1,297 @@
 @startuml
+' ============================================================
+'  GLOBAL STYLE
+' ============================================================
 skinparam backgroundColor white
 skinparam classBackgroundColor White
 skinparam classBorderColor Black
 skinparam classFontColor Black
-skinparam arrowColor Black
-skinparam roundcorner 10
-skinparam dpi 150
+skinparam classFontSize 14
+skinparam classAttributeFontSize 11
+skinparam ArrowColor Black
+skinparam ArrowThickness 1.1
+skinparam roundcorner 12
+skinparam dpi 250
 skinparam shadowing false
 skinparam linetype ortho
+skinparam nodesep 90
+skinparam ranksep 120
 skinparam packageStyle rectangle
+top to bottom direction
 
-title <b><size:18>Black-Scholes Trading System – Corrected Class Diagram</size></b>
+title
+<b><size:22>Black–Scholes Trading System – Clean Structured UML</size></b>
+end title
 
-' ======= ENUMS =======
-enum OrderType {
-  BUY
-  SELL
-  BUY_TO_COVER
-  SELL_SHORT
+
+' ============================================================
+'  MARKET DATA
+' ============================================================
+package "Market Data Layer" #E6F3FF {
+  together {
+    class CSVData {
+      - filePath: string
+      - allData: map<string, vector<double>>
+      - header: vector<string>
+      - ticker: string
+      --
+      + loadData(filepath: string): bool
+      + parseCSV(): void
+      + getColumn(name: string): vector<double>
+      + getTicker(): string
+      + getDates(): vector<string>
+      + getCurrentPrice(): double
+      + getAverageVolume(): double
+    }
+
+    class Stocks {
+      # ticker: string
+      # companyName: string
+      # sector: string
+      # priceHistory: vector<double>
+      # marketCap: double
+      # peRatio: double
+      # beta: double
+      # dividendYield: double
+      --
+      + updateCurrentPrice(price: double): void
+      + calculateVolatility(window: int = 30): double
+      + calculateDailyReturn(): double
+      + calculateBeta(indexReturns: vector<double>): double
+      + getMovingAverage(days: int): double
+      + getFundamentalSummary(): string
+    }
+  }
+  CSVData --> Stocks : provides data >
 }
 
-enum OrderStatus {
-  PENDING
-  FILLED
-  PARTIALLY_FILLED
-  CANCELLED
-  REJECTED
-}
 
-enum OrderPriceType {
-  MARKET
-  LIMIT
-  STOP
-  STOP_LIMIT
-}
+' ============================================================
+'  PORTFOLIO
+' ============================================================
+package "Portfolio Layer" #FFF8DC {
+  together {
+    abstract class Position {
+      # positionId: string
+      # ticker: string
+      # quantity: int
+      # entryPrice: double
+      # currentPrice: double
+      # openDate: time_t
+      --
+      + calculateValue(): double
+      + updatePrice(price: double): void
+      + closePosition(price: double): void
+      + calculatePnL(): double
+      + calculateReturnPercent(): double
+    }
 
-enum PositionType {
-  LONG
-  SHORT
-}
+    class Portfolio {
+      - portfolioId: string
+      - positions: map<string, Position*>
+      - cashBalance: double
+      - realisedPnL: double
+      - unrealisedPnL: double
+      --
+      + addPosition(Position*): void
+      + calculateTotalValue(): double
+      + calculateRiskExposure(): double
+      + calculateSharpeRatio(): double
+      + rebalancePortfolio(): void
+    }
 
-enum RiskLevel {
-  CONSERVATIVE
-  MODERATE
-  AGGRESSIVE
-  VERY_AGGRESSIVE
-}
-
-' ======= MARKET DATA =======
-package "Market Data Layer" {
-  class CSVData {
-    - allData: map<string, vector<double>>
-    - header: vector<string> 
-    - ticker: string 
-    - colSize: int
-    --
-    + getName(): string
-    + getDate(): time_t
-    + getCurrentPrice(): double
-    + getOpenPrice(): double
-    + getClosePrice(): double
-    + getHighPrice(): double
-    + getLowPrice(): double
-    + getVolume(): long long
-    + getAllData(): map<string, vector<double>>
-    + getHeader(): vector<string>
-    + getTicker(): string
-    + getDates(): vector<string>
+    class Order {
+      - orderId: string
+      - stock: Stocks*
+      - orderType: OrderType
+      - status: OrderStatus
+      - quantity: int
+      - price: double
+      --
+      + executeOrder(price: double, qty: int): void
+      + cancelOrder(): void
+      + modifyOrder(newPrice: double, newQty: int): void
+    }
   }
 
-  class Stocks {
-    # ticker: string
-    # companyName: string
-    # priceHistory: vector<stockData>
-    # currentData: stockData
-    # instrumentId: string
-    # baseValue: double
-    # creationTime: time_t
-    --
-    + updateCurrentPrice(double price): virtual void
-    + calculateValue(): virtual double
-    + calculateRisk(): virtual double
-    + displayInfo(): virtual void
-    + getClassType(): virtual string
-    + addHistoricalData(stockData data): void
-    + calculateDailyReturn(): double
-    + calculateVolatility(): double
-    + printStockInfo(): void
-  }
+  Stocks <|-- Position
+  Position <|-- Portfolio
+  Portfolio o-- Order : manages >
 }
 
-' ======= PORTFOLIO LAYER =======
-package "Portfolio & Trading Layer" {
-  abstract class Position {
-    # positionId: string
-    # type: PositionType
-    # quantity: int
-    # entryPrice: double
-    # currentValue: double
-    # openDate: time_t
-    # lastUpdated: time_t
-    # isOpen: bool
-    # unrealisedPnL: double
-    --
-    + calculateValue(): virtual double
-    + calculateRisk(): virtual double
-    + displayInfo(): virtual void
-    + getClassType(): virtual string
-    + updateCurrentPrice(double price): virtual void
-    + updatePositionValue(): void
-    + calculateUnrealisedPnL(): double
-    + calculateRealisedPnL(double closePrice) : double
-    + closePosition(double closePrice): void
-    + addToPosition(int additionalQuantity, double newEntryPrice): void
-    + reducePosition(int quantityToReduce, double exitPrice): void
-    + getPositionValue(): double
-    + getPositionWeight(double totalPortfolioValue): double
-    + getPositionTypeString(): string
-    + printPositionDetails(): void
-  }
 
-  class Portfolio {
-    # portfolioId: string
-    # ownerId: string
-    # positions: unordered_map<string, Position*>
-    # orders: vector<Order*>
-    # watchlist: unordered_map<string, Stocks*>
-    # cashBalance: double
-    # initialValue: double
-    # totalPortfolioValue: double
-    # creationDate: time_t
-    # lastUpdated: time_t
-    --
-    + calculateValue(): virtual double
-    + calculateRisk(): virtual double
-    + displayInfo(): virtual void
-    + getClassType(): virtual string
-    + updateCurrentPrice(double price): virtual void
-    + addPosition(Position* position): void
-    + removePosition(string ticker): void
-    + getPosition(string ticker): Position*
-    + hasPosition(string ticker): bool
-    + updatePositions(): void
-    + addOrder(Order* order): void
-    + cancelOrder(string orderId): void
-    + getOrder(string orderId): Order*
-    + getPendingOrders(): vector<Order*>
-    + getFilledOrders(): vector<Order*>
-    + processOrders(): void
-    + hasSufficientFunds(double amount): bool
-    + addCash(double amount): void
-    + deductCash(double amount): void
-    + calculateTotalValue(): double
-    + calculatePositionsValue(): double
-    + calculateTotalPnL(): double
-    + calculateUnrealisedPnL(): double
-    + calculateRealisedPnL(): double
-    + calculateDayChange(): double
-    + calculateTotalReturn(): double
-    + addToWatchlist(Stocks* stock): void
-    + removeFromWatchlist(string ticker): void
-    + isInWatchlist(string ticker): bool
-    + getAssetAllocation(): unordered_map<string, double>
-    + getPositionWeight(string ticker): double
-    + getTopPositions(int count = 5): vector<Position*>
-    + calculatePortfolioBeta(): double
-    + calculateSharpeRatio(): double
-    + printPortfolioSummary(): void
-    + printPositions(): void
-    + printOrders(): void
-    + printWatchlist(): void
-  }
-
-  class Order {
-    - orderId: string
-    - stock: Stocks* 
-    - orderType: OrderType
-    - status: OrderStatus
-    - priceType: OrderPriceType
-    - quantity: int
-    - price: double
-    - stopPrice: double
-    - filledQuantity: int
-    - avgFillPrice: double
-    - orderTime: time_t
-    - lastUpdated: time_t
-    - userId: string
-    --
-    + canExecute(): bool
-    + executeOrder(double executionPrice, int executedQuantity): void
-    + partialFill(double fillPrice, int fillQuantity): void
-    + cancelOrder(): void
-    + rejectOrder(): void
-    + getRemainingQuantity(): int
-    + getTotalValue(): double
-    + getFilledValue(): double
-    + isCompletelyFilled(): bool
-    + getOrderTypeString(): string
-    + getOrderStatusString(): string
-    + getPriceTypeString(): string
-    + createPositionFromOrder(): Position*
-    + printOrderDetails(): void
-  }
-}
-
-' ======= USER LAYER =======
-package "User Management" {
+' ============================================================
+'  USER
+' ============================================================
+package "User Management" #EAF4EA {
   class User {
     - userId: string
-    - userName: string
-    - firstName: string
-    - lastName: string
+    - name: string
+    - email: string
     - portfolios: vector<Portfolio*>
     - riskLevel: RiskLevel
     - riskTolerance: double
-    - registrationDate: time_t
-    - lastLoginDate: time_t
-    - isActive: bool
-    - totalInvestmentCapital: double
     --
-    + addPortfolio(Portfolio* portfolio): void
-    + removePortfolio(string portfolioId): void
-    + getPortfolio(string portfolioId): Portfolio*
-    + getPrimaryPortfolio(): Portfolio* 
-    + updateLastLogin(): void
-    + activateAccount(): void
-    + deactivateAccount(): void
-    + calculateTotalPortfolioValue(): double
-    + calculateTotalCashBalance(): double
-    + calculateTotalUnrealizedPnL(): double
-    + calculateTotalRealizedPnL(): double
+    + addPortfolio(Portfolio*): void
+    + calculateTotalValue(): double
     + calculateOverallReturn(): double
-    + getRiskLevelString(): string
-    + isRiskToleranceExceeded(double portfolioRisk): bool
-    + getRecommendedMaxPositionSize(double portfolioValue): double
-    + printUserProfile(): void
-    + printPortfolioSummary(): void
-    + getAllPositions(): vector<Position*>
-    + getAllOrders(): vector<Order*>
+    + assessRiskProfile(): string
+    + printProfile(): void
   }
+
+  User o-- Portfolio : owns >
 }
 
-' ======= PRICING LAYER =======
-package "Pricing & Derivatives" {
+
+' ============================================================
+'  PRICING
+' ============================================================
+package "Pricing & Derivatives" #F5F5F5 {
   abstract class Options {
     - optionType: string
     - underlying: Stocks
+    - strike: double
+    - expiry: time_t
     --
     + getOptionType(): string
-    + getUnderlying(): Stocks
-  }
-
-  class Call {
-    + getPayoff(price: double): double
-    + impliedVolatility(): double
-  }
-
-  class Put {
-    + getPayoff(price: double): double
-    + impliedVolatility(): double
+    + getTimeToMaturity(): double
   }
 
   class BlackScholes {
-    - spotPrice: double
-    - strikePrice: double
-    - timeToMaturity: double
-    - riskFreeInterestRate: double
-    - volatilityOfUnderlyingAsset: double
+    - spot: double
+    - strike: double
+    - rate: double
+    - volatility: double
+    - maturity: double
     - dividendYield: double
-    - delta: double
-    - gamma: double
-    - vega: double
-    - theta: double
-    - rho: double
     --
-    + D1(): double
-    + D2(): double
     + callPrice(): double
     + putPrice(): double
-    + deltaCall(): double
-    + deltaPut(): double
+    + delta(): double
     + gamma(): double
-    + thetaCall(): double
-    + thetaPut(): double
     + vega(): double
-    + rhoCall(): double
-    + rhoPut(): double
+    + theta(): double
+    + rho(): double
   }
+
+  Options <|-- BlackScholes
+  Options --> Stocks : uses >
 }
 
-' ======= DASHBOARD / GUI =======
-package "Interface Layer (GUI & Control)" {
-  class Dashboard {
-    - sf::RenderWindow window
-    - sf::Font mainFont
-    - PortfolioView* portfolioView
-    - ChartView* chartView
-    - OrderPanel* orderPanel
-    - NotificationCenter* notifications
-    - bool isRunning
+
+' ============================================================
+'  GRAPHIC SYSTEM
+' ============================================================
+package "Graphic System" #E6F8FF {
+  abstract class Graphic {
+    - windowWidth: int
+    - windowHeight: int
+    - title: string
+    - frameRate: double
     --
-    + Dashboard()
     + init(): void
-    + run(): void
-    + handleEvents(): void
-    + update(): void
     + render(): void
-    + connectUser(User* user): void
-    + updateFromMarket(Stocks* stock): void
-    + refreshUI(): void
+    + update(): void
+    + handleEvents(): void
+    + shutdown(): void
   }
 
-  class PortfolioView {
-    - Portfolio* portfolio
-    - vector<Position*> displayedPositions
+  class Dashboard {
+    - graphs: vector<Graphs*>
+    - backgroundColor: string
+    - refreshInterval: double
     --
-    + PortfolioView(Portfolio* p)
-    + render(sf::RenderWindow&): void
-    + updatePortfolioData(): void
-    + showSummary(): void
-    + highlightTopPositions(int count): void
+    + addGraph(Graphs*): void
+    + removeGraph(string title): void
+    + render(): void
+    + refreshData(): void
+    + displayStats(User*): void
   }
 
-  class ChartView {
-    - vector<double> priceData
-    - Stocks* currentStock
-    - sf::RectangleShape axisX
-    - sf::RectangleShape axisY
+  abstract class Graphs {
+    - position: tuple<int,int>
+    - size: tuple<int,int>
+    - title: string
+    - data: vector<double>
     --
-    + ChartView()
-    + setStock(Stocks* stock): void
-    + updateChartData(): void
-    + render(sf::RenderWindow&): void
-    + drawIndicators(): void
-    + overlayOptionGreeks(BlackScholes* model): void
+    + draw(): void
+    + resize(scale: double): void
+    + setData(vector<double>): void
   }
 
-  class OrderPanel {
-    - User* activeUser
-    - Portfolio* linkedPortfolio
-    - vector<Order*> recentOrders
-    - string selectedTicker
+  class Line {
+    - dataPoints: vector<pair<double,double>>
+    - color: string
     --
-    + OrderPanel(User* user, Portfolio* portfolio)
-    + render(sf::RenderWindow&): void
-    + createOrder(string ticker, OrderType, int qty, double price, OrderPriceType): void
-    + cancelOrder(string orderId): void
-    + showOrderHistory(): void
-    + validateInputs(): bool
+    + draw(): void
+    + smoothCurve(): void
   }
 
-  class NotificationCenter {
-    - vector<string> activeMessages
-    - time_t lastUpdate
+  class Bar {
+    - barValues: vector<double>
+    - barColor: string
     --
-    + addMessage(string msg): void
-    + render(sf::RenderWindow&): void
-    + clearOldMessages(): void
-    + pushTradeNotification(Order* order): void
-    + pushPortfolioUpdate(Portfolio* portfolio): void
+    + draw(): void
+    + setBarWidth(width: double): void
   }
+
+  abstract class UserInput {
+    - elements: vector<InputElement*>
+    - cursorPos: tuple<int,int>
+    --
+    + processEvents(): void
+    + render(): void
+    + failure(): void
+  }
+
+  abstract class InputElement {
+    - position: tuple<int,int>
+    - size: tuple<int,int>
+    - isHovered: bool
+    --
+    + draw(): void
+    + updateState(): void
+  }
+
+  class Button {
+    - label: string
+    - onClick: function
+    --
+    + draw(): void
+    + click(): void
+  }
+
+  class Text {
+    - content: string
+    - font: string
+    - fontSize: int
+    --
+    + draw(): void
+    + updateText(newText: string): void
+  }
+
+  ' inheritance
+  Graphic     <|-- Dashboard
+  Dashboard   <|-- UserInput
+  Graphs      <|-- Line
+  Graphs      <|-- Bar
+  InputElement<|-- Button
+  InputElement<|-- Text
+
+  ' composition
+  Dashboard *-- Graphs
+  UserInput *-- InputElement
 }
 
-' ======= INHERITANCE & RELATIONSHIPS =======
-Stocks <|-- Position
-Position <|-- Portfolio
-Options <|-- Call
-Options <|-- Put
 
-' Ownerships (composition/aggregation)
-User "1" o-- "*" Portfolio : owns >
-Portfolio "1" o-- "*" Position : manages >
-Portfolio "1" o-- "*" Order : executes >
-Portfolio "1" o-- "*" Stocks : watchlist >
-Order "*" --> "1" Stocks : trades >
-Order "*" --> "1" User : placed by >
-
-Options --> Stocks : underlying >
-BlackScholes --> Stocks : pricing input >
-Dashboard --> Portfolio : displays summary >
-CSVData --> Stocks : provides data >    
-
-Dashboard *-- PortfolioView : displays >
-Dashboard *-- ChartView : visualizes >
-Dashboard *-- OrderPanel : executes >
-Dashboard *-- NotificationCenter : alerts >
-
-PortfolioView --> Portfolio : observes >
-OrderPanel --> User : interacts >
-OrderPanel --> Portfolio : submits trades >
-ChartView --> Stocks : tracks >
-ChartView --> BlackScholes : overlays model >
-NotificationCenter --> Order : receives >
-NotificationCenter --> Portfolio : updates >
-
-Dashboard --> User : connected user >
+' ============================================================
+'  CROSS-LAYER RELATIONSHIPS  (tidy downward flow)
+' ============================================================
+User         --> Dashboard  : controls >
+Dashboard    --> Portfolio  : displays holdings >
+Portfolio    --> Stocks     : contains data >
+BlackScholes --> Dashboard  : feeds analytics >
+Dashboard    --> UserInput  : handles input >
+User         --> Portfolio  : manages >
 
 @enduml

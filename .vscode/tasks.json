@@ -1,0 +1,25 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Build Raylib App",
+        "type": "shell",
+        "command": "g++",
+        "args": [
+          "main.cpp",
+          "-o", "game",
+          "-std=c++17",
+          "-I/opt/homebrew/include",
+          "-L/opt/homebrew/lib",
+          "-lraylib",
+          "-framework", "OpenGL",
+          "-framework", "Cocoa",
+          "-framework", "IOKit",
+          "-framework", "CoreVideo"
+        ],
+        "group": { "kind": "build", "isDefault": true },
+        "problemMatcher": ["$gcc"]
+      }
+    ]
+  }
+  

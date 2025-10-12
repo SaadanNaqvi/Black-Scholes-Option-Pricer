@@ -1,0 +1,19 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Run Raylib App",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}/game",
+        "args": [],
+        "stopAtEntry": false,
+        "cwd": "${workspaceFolder}",
+        "environment": [],
+        "externalConsole": false,
+        "MIMode": "lldb",
+        "preLaunchTask": "Build Raylib App"
+      }
+    ]
+  }
+  

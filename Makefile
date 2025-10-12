@@ -1,32 +1,31 @@
-# ---- Simple Makefile for ad-hoc builds with SFML 3 ----
-CXX := clang++
+CXXFLAGS  := -std=c++17 -Wall -Isrc -Iinclude -I/opt/homebrew/include
+LIBS      := -L/opt/homebrew/lib -lraylib \
+              -framework OpenGL -framework Cocoa -framework IOKit -framework CoreVideo
 
-# Strip any trailing whitespace/newlines from brew --prefix
-HB  := $(strip $(shell brew --prefix))
+DASHBOARD_SRCS := \
+	src/Graphics.cpp \
+	src/main-graphics.cpp \
+	src/Button.cpp \
+	src/Bar.cpp \
+	src/Line.cpp \
+	src/Text.cpp
 
-CXXFLAGS := -std=c++17 -Wall -Wextra -Iinclude -I$(HB)/include
-LDFLAGS  := -L$(HB)/lib -lsfml-graphics -lsfml-window -lsfml-system \
-            -framework Cocoa -framework IOKit -framework CoreVideo -framework OpenGL \
-            -Wl,-rpath,$(HB)/lib
+# Default target
+all:
+	@echo "Usage:"
+	@echo "  make dashboard   → build & run dashboard"
+	@echo "  make clean       → remove old builds"
 
-# Pass files at call time:
-#   make build SRCS="src/main-dashboard.cpp src/Dashboard.cpp" OUT=dashboard
-#   make run   SRCS="src/main-dashboard.cpp src/Dashboard.cpp" OUT=dashboard
-SRCS ?= src/main.cpp
-OUT  ?= app
 
-.PHONY: build run clean print
+dashboard:
+	@echo "Building dashboard..."
+	g++ $(CXXFLAGS) $(DASHBOARD_SRCS) -o dashboard.out $(LIBS)
+	@echo "Running dashboard..."
+	./dashboard.out
 
-build:
-	$(CXX) $(CXXFLAGS) $(SRCS) -o $(OUT) $(LDFLAGS)
-
-run: build
-	./$(OUT)
 
 clean:
-	rm -f $(OUT)
+	rm -f *.out
+	@echo "🧹 Clean complete"
 
-print:
-	@echo HB='$(HB)'
-	@echo CXXFLAGS='$(CXXFLAGS)'
-	@echo LDFLAGS='$(LDFLAGS)'
+
