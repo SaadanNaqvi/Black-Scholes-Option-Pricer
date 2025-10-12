@@ -1,17 +1,13 @@
 #include "Graphics.h"
 
 int main() {
-    InitWindow(900, 600, "Portfolio Dashboard");
+    InitWindow(900, 600, "User Login + Dashboard");
     SetTargetFPS(60);
 
     Graphics g;
 
-    while (!WindowShouldClose()) {
-        BeginDrawing();
-        ClearBackground(RAYWHITE);
-        g.dashboard();
-        EndDrawing();
-    }
+    // Start with login screen
+    g.loginScreen();
 
     CloseWindow();
     return 0;

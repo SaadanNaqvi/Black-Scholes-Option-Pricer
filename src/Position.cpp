@@ -145,7 +145,7 @@ double Position::calculateUnrealisedPnL() const {
     return pnl;
 }
 
-double Position::calculateRealizedPnL(double closePrice) const {
+double Position::calculateRealisedPnL(double closePrice) const {
     double pnl = 0.0;
     
     if (type == LONG) {
@@ -213,7 +213,7 @@ void Position::printPositionDetails() const {
     cout << "Quantity: " << quantity << " shares" << endl;
     cout << "Entry Price: $" << fixed << setprecision(2) << entryPrice << endl;
     cout << "Current Value: $" << fixed << setprecision(2) << currentValue << endl;
-    cout << "Unrealized P&L: $" << fixed << setprecision(2) << calculateUnrealisedPnL() << endl;
+    cout << "Unrealised P&L: $" << fixed << setprecision(2) << calculateUnrealisedPnL() << endl;
     cout << "Status: " << (isOpen ? "OPEN" : "CLOSED") << endl;
     
     // Convert timestamps to readable format

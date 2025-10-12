@@ -8,7 +8,12 @@ DASHBOARD_SRCS := \
 	src/Button.cpp \
 	src/Bar.cpp \
 	src/Line.cpp \
-	src/Text.cpp
+	src/Text.cpp \
+	src/User.cpp \
+	src/Portfolio.cpp \
+	src/Order.cpp \
+	src/Stocks.cpp \
+	src/Position.cpp \
 
 # Default target
 all:

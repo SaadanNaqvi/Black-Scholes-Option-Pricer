@@ -5,14 +5,27 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include "User.h"
+#include <unordered_map>
 
 class Graphics {
-public:
-    virtual void draw() {}
-    virtual void update() {}
+    private:
+        unordered_map<string, User*> users;
+        User* currentUser = nullptr;
+    public:
+        virtual void draw() {}
+        virtual void update() {}
 
-    // Dashboard that assembles everything visually
-    void dashboard();
+        void signupScreen();
+        void loginScreen();
+
+        bool signupUser(string username, string firstName, string lastName, string password);
+        bool loginUser(string username, string password);
+
+        // Dashboard that assembles everythifong visually
+        void dashboard();
+
+        User* getCurrentUser();
 };
 
 #endif

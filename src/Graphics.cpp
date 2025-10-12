@@ -5,24 +5,137 @@
 #include "Button.h"
 #include "Text.h"
 #include "InputElement.h"
+#include "User.h"
 #include <memory>
 using namespace std;
 
+#define BG_COLOR  CLITERAL(Color){ 15, 25, 50, 255 }     // deep navy blue
+#define PANEL_COLOR CLITERAL(Color){ 25, 40, 80, 255 }   // darker blue for boxes
+#define TEXT_COLOR  CLITERAL(Color){ 230, 230, 240, 255 } // off-white text
+#define ACCENT_COLOR CLITERAL(Color){ 50, 150, 255, 255 } // blue accent for highlights
+
 void Graphics::dashboard() {
-    vector<Vector2> stockData = {{80, 400}, {160, 370}, {240, 350}, {320, 320}, {400, 330}, {480, 310}};
-    Line line(Rectangle{50, 100, 450, 250}, stockData);
+    while (!WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(BG_COLOR);
 
-    vector<float> profitLoss = {-700, 780, 10};
-    Bar bars(Rectangle{550, 100, 300, 250}, profitLoss);
+        DrawText("Dashboard", 350, 40, 32, TEXT_COLOR);
 
-    Button exec(Rectangle{100, 500, 120, 40}, "Execute");
-    Text option(Rectangle{260, 500, 150, 40}, "Option Type");
+        if (currentUser) {
+            DrawText(TextFormat("Welcome, %s!", currentUser->getFirstName().c_str()), 50, 100, 22, ACCENT_COLOR);
+        }
 
-    // Draw all components
-    line.draw();
-    bars.draw();
-    exec.draw();
-    option.draw();
+        DrawRectangle(50, 150, 350, 250, PANEL_COLOR);
+        DrawRectangle(450, 150, 350, 250, PANEL_COLOR);
 
-    DrawText("Portfolio Dashboard", 320, 30, 24, DARKBLUE);
+        DrawText("Line Graph Area", 100, 260, 20, TEXT_COLOR);
+        DrawText("Bar Graph Area", 500, 260, 20, TEXT_COLOR);
+
+        EndDrawing();
+    }
+}
+
+void Graphics::signupScreen() {
+    Text username({300, 150, 250, 30}, "Enter username");
+    Text password({300, 200, 250, 30}, "Enter password");
+    Text firstName({300, 250, 250, 30}, "First name");
+    Text lastName({300, 300, 250, 30}, "Last name");
+
+    Button signupBtn({360, 370, 150, 40}, "Create Account");
+    Button loginRedirect({380, 430, 100, 30}, "Login →");
+
+    bool done = false;
+
+    while (!done && !WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(BG_COLOR);
+
+        DrawText("Create Account", 330, 80, 30, TEXT_COLOR);
+
+        username.update(); password.update(); firstName.update(); lastName.update();
+        username.draw(); password.draw(); firstName.draw(); lastName.draw();
+
+        signupBtn.draw();
+        loginRedirect.draw();
+
+        if (signupBtn.isClicked()) {
+            if (signupUser(username.getContent(), firstName.getContent(), lastName.getContent(), password.getContent())) {
+                done = true; // success -> auto login
+            }
+        }
+
+        if (loginRedirect.isClicked()) {
+            // go to login screen
+            loginScreen();
+            return; // after login, stop signup screen
+        }
+
+        EndDrawing();
+    }
+
+    if (currentUser) dashboard();
+}
+
+void Graphics::loginScreen() {
+    Text username({300, 180, 250, 30}, "Username");
+    Text password({300, 230, 250, 30}, "Password");
+    Button loginBtn({360, 300, 150, 40}, "Login");
+    Button signupRedirect({360, 360, 150, 30}, "← Sign Up");
+
+    bool done = false;
+
+    while (!done && !WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(BG_COLOR);
+
+        DrawText("User Login", 370, 100, 30, TEXT_COLOR);
+
+        username.update(); password.update();
+        username.draw(); password.draw();
+        loginBtn.draw(); signupRedirect.draw();
+
+        if (loginBtn.isClicked()) {
+            if (loginUser(username.getContent(), password.getContent())) {
+                done = true;
+            }
+        }
+
+        if (signupRedirect.isClicked()) {
+            signupScreen();
+            return; // back to signup
+        }
+
+        EndDrawing();
+    }
+
+    if (currentUser) dashboard();
+}
+
+bool Graphics::signupUser(string username, string firstName, string lastName, string password) {
+    if (users.find(username) != users.end()) {
+        cout << "Username already exists!" << endl;
+        return false;
+    }
+
+    User* newUser = new User(username, username, firstName, lastName);
+    users[username] = newUser;
+    cout << "Account created for " << username << endl;
+    currentUser = newUser;
+    return true;
+}
+
+bool Graphics::loginUser(string username, string password) {
+    if (users.find(username) == users.end()) {
+        cout << "User not found." << endl;
+        return false;
+    }
+    currentUser = users[username];
+    currentUser->updateLastLogin();
+    cout << "Logged in as " << username << endl;
+    return true;
+}
+
+
+User* Graphics::getCurrentUser() {
+    return currentUser;
 }

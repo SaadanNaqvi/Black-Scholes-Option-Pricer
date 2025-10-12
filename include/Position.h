@@ -61,7 +61,7 @@ class Position : public Stocks {
         double calculateRealisedPnL(double closePrice) const;
         void closePosition(double closePrice);
         void addToPosition(int additionalQuantity, double newEntryPrice);
-        void reducePosition();
+        void reducePosition(int quantityToReduce, double exitPrice);
         
         // Utility functions
         double getPositionValue() const;
