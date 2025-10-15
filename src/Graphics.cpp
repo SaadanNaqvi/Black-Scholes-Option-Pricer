@@ -7,17 +7,23 @@
 #include "Text.h"
 #include "InputElement.h"
 #include "User.h"
+#include "Theme.h"
+#include "Stocks.h"
 #include <memory>
 #include <fstream>
+#include <algorithm>
 using namespace std;
 
-#define BG_COLOR  CLITERAL(Color){ 15, 25, 50, 255 }     // deep navy blue
-#define PANEL_COLOR CLITERAL(Color){ 25, 40, 80, 255 }   // darker blue for boxes
-#define TEXT_COLOR  CLITERAL(Color){ 230, 230, 240, 255 } // off-white text
-#define ACCENT_COLOR CLITERAL(Color){ 50, 150, 255, 255 } // blue accent for highlights
+// ==== Color Theme ====
+#define BG_COLOR       CLITERAL(Color){ 15, 25, 50, 255 }     // deep navy blue
+#define PANEL_COLOR    CLITERAL(Color){ 25, 40, 80, 255 }     // darker blue
+#define TEXT_COLOR     CLITERAL(Color){ 230, 230, 240, 255 }  // off-white
+#define ACCENT_COLOR   CLITERAL(Color){ 50, 150, 255, 255 }   // bright blue
+#define GRID_COLOR     CLITERAL(Color){ 50, 60, 100, 255 }    // grid lines
 
+// =====================================
 void Graphics::dashboard() {
-    // Load stock tickers from assets/stocksData
+
     vector<string> tickers = {"AAPL", "TSLA", "MSFT", "GOOG"};
     ifstream file("assets/stocksData");
     if (file.is_open()) {
@@ -28,7 +34,7 @@ void Graphics::dashboard() {
     // UI Elements
     Dropdown tickerSelect({100, 650, 200, 30}, tickers);
     Dropdown callPut({350, 650, 150, 30}, {"Call", "Put"});
-    Dropdown optionStyle({650, 650, 180, 30}, {"American", "European"});
+    Dropdown optionStyle({550, 650, 180, 30}, {"American", "European"});
 
     Text startDate({100, 720, 180, 30}, "Start Date (YYYY-MM-DD)");
     Text endDate({360, 720, 180, 30}, "End Date (YYYY-MM-DD)");
@@ -37,6 +43,9 @@ void Graphics::dashboard() {
     Button executeBtn({100, 550, 150, 40}, "Execute");
     Button stopBtn({280, 550, 150, 40}, "Stop");
 
+    unique_ptr<Line> lineGraph;
+    unique_ptr<Bar> barGraph;
+
     bool running = true;
     float simTime = 0.0f;
 
@@ -44,11 +53,12 @@ void Graphics::dashboard() {
         BeginDrawing();
         ClearBackground(BG_COLOR);
 
-        DrawText("Option Simulator Dashboard", 250, 50, 28, TEXT_COLOR);
+        DrawText("Option Simulator Dashboard", 220, 50, 30, TEXT_COLOR);
         DrawText("Select parameters:", 100, 600, 20, ACCENT_COLOR);
 
+        // ====== Update Logic ======
         if (!isSimulating) {
-            // Update only when not simulating
+            // Update all inputs when simulation is off
             tickerSelect.update();
             callPut.update();
             optionStyle.update();
@@ -57,18 +67,73 @@ void Graphics::dashboard() {
             strike.update();
 
             if (executeBtn.isClicked()) {
-                isSimulating = true;
-                simTime = 0;
+                try {
+                    // Load all stock data like your standalone test code
+                    Stocks stockData = Stocks("AAPL", "Tesla");  // Load full dataset
+
+                    auto allData = stockData.priceHistory.getAllData();
+
+                    if (allData.empty()) throw runtime_error("No stock data found");
+
+                    vector<string> times;
+                    vector<float> prices;
+
+                    // Loop through entire file data (exactly like your main() example)
+                    for (auto [date, vals] : allData) {
+                        times.push_back(date);
+                        if (vals.size() >= 4)
+                            prices.push_back(vals[3]);  // close price
+                        else if (!vals.empty())
+                            prices.push_back(vals[0]);  // fallback
+                    }
+
+                    // Clamp if too many data points (to fit on screen)
+                    if (prices.size() > 400) {
+                        times.resize(400);
+                        prices.resize(400);
+                    }
+
+                    lineGraph = make_unique<Line>(
+                        Rectangle{100, 100, 700, 350}, times, prices
+                    );
+                    barGraph  = make_unique<Bar>(
+                        Rectangle{100, 470, 700, 60}, prices
+                    );
+
+                    isSimulating = true;
+                    simTime = 0;
+
+                } catch (exception &e) {
+                    DrawText(e.what(), 100, 520, 18, RED);
+                }
             }
         } else {
-            // Simulation logic
-            simulation(GetFrameTime());
+            // ===== Simulation running =====
             simTime += GetFrameTime();
-            DrawText(TextFormat("Simulating... %.1fs", simTime), 500, 550, 18, GREEN);
-            if (stopBtn.isClicked()) isSimulating = false;
+
+            if (lineGraph) lineGraph->simulation(GetFrameTime());
+            if (barGraph) barGraph->simulation(GetFrameTime());
+
+            DrawText(TextFormat("Simulating %.1fs...", simTime), 500, 550, 18, GREEN);
+
+            if (stopBtn.isClicked()) {
+                isSimulating = false;
+                simTime = 0;
+            }
         }
 
-        // Draw UI
+        // ===== Draw all UI =====
+        DrawRectangle(80, 90, 760, 470, PANEL_COLOR);
+
+        // Draw axes / grid for the graph background
+        for (int i = 0; i < 10; i++) {
+            DrawLine(100, 100 + i * 35, 800, 100 + i * 35, GRID_COLOR);
+            DrawLine(100 + i * 70, 100, 100 + i * 70, 450, GRID_COLOR);
+        }
+
+        if (lineGraph) lineGraph->draw();
+        if (barGraph) barGraph->draw();
+
         tickerSelect.draw();
         callPut.draw();
         optionStyle.draw();
@@ -76,14 +141,13 @@ void Graphics::dashboard() {
         endDate.draw();
         strike.draw();
 
-        if (!isSimulating)
-            executeBtn.draw();
-        else
-            stopBtn.draw();
+        if (!isSimulating) executeBtn.draw();
+        else stopBtn.draw();
 
         EndDrawing();
     }
 }
+
 
 void Graphics::signupScreen() {
     Text username({300, 125, 250, 30}, "Enter username");
@@ -95,9 +159,8 @@ void Graphics::signupScreen() {
     Button loginRedirect({380, 450, 100, 30}, "Login →");
 
     bool accountCreated = false;
-    bool done = false;
 
-    while (!done && !WindowShouldClose()) {
+    while (!WindowShouldClose()) {
         BeginDrawing();
         ClearBackground(BG_COLOR);
 
@@ -109,7 +172,6 @@ void Graphics::signupScreen() {
         signupBtn.draw();
         loginRedirect.draw();
 
-        // -------- Handle signup --------
         if (signupBtn.isClicked()) {
             if (signupUser(username.getContent(), firstName.getContent(),
                            lastName.getContent(), password.getContent())) {
@@ -117,13 +179,11 @@ void Graphics::signupScreen() {
             }
         }
 
-        // Show success or error feedback
         if (accountCreated) {
             DrawText("Account created successfully!", 300, 340, 18, GREEN);
             DrawText("Click 'Login' to continue.", 320, 365, 18, LIGHTGRAY);
         }
 
-        // -------- Redirect to login --------
         if (loginRedirect.isClicked()) {
             loginScreen();
             return;
@@ -139,10 +199,9 @@ void Graphics::loginScreen() {
     Button loginBtn({360, 300, 150, 40}, "Login");
     Button signupRedirect({360, 360, 150, 30}, "← Sign Up");
 
-    bool done = false;
     bool loginError = false;
 
-    while (!done && !WindowShouldClose()) {
+    while (!WindowShouldClose()) {
         BeginDrawing();
         ClearBackground(BG_COLOR);
 
@@ -154,15 +213,15 @@ void Graphics::loginScreen() {
 
         if (loginBtn.isClicked()) {
             if (loginUser(username.getContent(), password.getContent())) {
-                done = true; // successful login
+                dashboard(); // move to dashboard after login
+                return;
             } else {
                 loginError = true;
             }
         }
 
-        if (loginError) {
+        if (loginError)
             DrawText("Invalid username or password", 300, 270, 18, RED);
-        }
 
         if (signupRedirect.isClicked()) {
             signupScreen();
@@ -171,9 +230,8 @@ void Graphics::loginScreen() {
 
         EndDrawing();
     }
-
-    if (currentUser) dashboard();
 }
+
 
 bool Graphics::signupUser(string username, string firstName, string lastName, string password) {
     if (users.find(username) != users.end()) {
@@ -198,7 +256,6 @@ bool Graphics::loginUser(string username, string password) {
     cout << "Logged in as " << username << endl;
     return true;
 }
-
 
 User* Graphics::getCurrentUser() {
     return currentUser;

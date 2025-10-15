@@ -1,8 +1,8 @@
 #ifndef BAR_H
 #define BAR_H
-
 #include "Graph.h"
 #include <vector>
+#include "Theme.h"
 using namespace std;
 
 class Bar : public Graph {
@@ -13,5 +13,4 @@ public:
     void draw() override;
     void simulation(float dt) override;
 };
-
 #endif

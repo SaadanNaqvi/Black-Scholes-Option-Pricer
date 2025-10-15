@@ -7,6 +7,7 @@
 #include <memory>
 #include "User.h"
 #include <unordered_map>
+#include "Theme.h"
 
 class Graphics {
     protected:
