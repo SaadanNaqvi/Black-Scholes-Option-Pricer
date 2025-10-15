@@ -3,10 +3,9 @@
 
 #include "Options.h"
 
-class Put: public Options{
-    private:
-    public:
+class Put : public Options {
+ private:
+ public:
 };
-
 
 #endif

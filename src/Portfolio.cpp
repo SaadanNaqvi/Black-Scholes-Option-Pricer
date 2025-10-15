@@ -32,8 +32,8 @@ Portfolio::Portfolio(string portfolioId, string ownerId,
 
 // Constructor with portfolio and initial position
 Portfolio::Portfolio(string portfolioId, string ownerId, string ticker,
-                     string companyName, double currentPrice, PositionType type,
-                     int quantity, double entryPrice, double initialCash) {
+                     string companyName, double currentPrice, int quantity,
+                     double entryPrice, double initialCash) {
   this->portfolioId = portfolioId;
   this->ownerId = ownerId;
   this->cashBalance = initialCash;
@@ -52,15 +52,7 @@ double Portfolio::getCashBalance() const { return cashBalance; }
 
 double Portfolio::getInitialValue() const { return initialValue; }
 
-unordered_map<string, Position*> Portfolio::getPositions() const {
-  return positions;
-}
-
 vector<Order*> Portfolio::getOrders() const { return orders; }
-
-unordered_map<string, Stocks*> Portfolio::getWatchlist() const {
-  return watchlist;
-}
 
 time_t Portfolio::getCreationDate() const { return creationDate; }
 
@@ -83,40 +75,6 @@ void Portfolio::setCashBalance(double balance) {
 }
 
 // Override virtual methods from Position/Stocks
-
-// Position management
-void Portfolio::addPosition(Position* position) {
-  if (position == nullptr) return;
-
-  string ticker = position->getTicker();  // Use inherited getTicker()
-  positions[ticker] = position;
-  lastUpdated = time(0);
-}
-
-void Portfolio::removePosition(string ticker) {
-  auto it = positions.find(ticker);
-  if (it != positions.end()) {
-    delete it->second;
-    positions.erase(it);
-    lastUpdated = time(0);
-  }
-}
-
-Position* Portfolio::getPosition(string ticker) const {
-  auto it = positions.find(ticker);
-  return (it != positions.end()) ? it->second : nullptr;
-}
-
-bool Portfolio::hasPosition(string ticker) const {
-  return positions.find(ticker) != positions.end();
-}
-
-void Portfolio::updatePositions() {
-  for (auto& pair : positions) {
-    pair.second->updatePositionValue();
-  }
-  lastUpdated = time(0);
-}
 
 // Order management
 void Portfolio::addOrder(Order* order) {
@@ -197,21 +155,6 @@ void Portfolio::processOrders(string date) {
 
       // Create or update position if order is filled
       if (order->isCompletelyFilled()) {
-        Position* newPosition = order->createPositionFromOrder();
-        if (newPosition != nullptr) {
-          string ticker = newPosition->getTicker();  // Use inherited method
-
-          // Check if we already have a position in this stock
-          if (hasPosition(ticker)) {
-            Position* existingPos = getPosition(ticker);
-            // Combine positions (simplified logic)
-            existingPos->addToPosition(abs(newPosition->getQuantity()),
-                                       newPosition->getEntryPrice());
-            delete newPosition;
-          } else {
-            addPosition(newPosition);
-          }
-        }
       }
     }
   }
@@ -241,26 +184,8 @@ double Portfolio::calculateTotalValue() const {
   return cashBalance + calculatePositionsValue();
 }
 
-double Portfolio::calculatePositionsValue() const {
-  double totalValue = 0.0;
-  for (const auto& pair : positions) {
-    totalValue += pair.second->getPositionValue();
-  }
-  return totalValue;
-}
-
 double Portfolio::calculateTotalPnL() const {
   return calculateUnrealisedPnL() + calculateRealisedPnL();
-}
-
-double Portfolio::calculateUnrealisedPnL() const {
-  double totalPnL = 0.0;
-  for (const auto& pair : positions) {
-    if (pair.second->getIsOpen()) {
-      totalPnL += pair.second->calculateUnrealisedPnL();
-    }
-  }
-  return totalPnL;
 }
 
 double Portfolio::calculateRealisedPnL() const {
@@ -277,20 +202,6 @@ double Portfolio::calculateTotalReturn() const {
 }
 
 // Watchlist management
-void Portfolio::addToWatchlist(Stocks* stock) {
-  if (stock == nullptr) return;
-  watchlist[stock->getTicker()] = stock;
-  lastUpdated = time(0);
-}
-
-void Portfolio::removeFromWatchlist(string ticker) {
-  watchlist.erase(ticker);
-  lastUpdated = time(0);
-}
-
-bool Portfolio::isInWatchlist(string ticker) const {
-  return watchlist.find(ticker) != watchlist.end();
-}
 
 // Portfolio analysis
 unordered_map<string, double> Portfolio::getAssetAllocation() const {
@@ -302,42 +213,9 @@ unordered_map<string, double> Portfolio::getAssetAllocation() const {
     allocation["CASH"] = (cashBalance / totalValue) * 100.0;
 
     // Stock allocations
-    for (const auto& pair : positions) {
-      string ticker = pair.first;
-      double positionValue = pair.second->getPositionValue();
-      allocation[ticker] = (positionValue / totalValue) * 100.0;
-    }
   }
 
   return allocation;
-}
-
-double Portfolio::getPositionWeight(string ticker) const {
-  if (!hasPosition(ticker)) return 0.0;
-
-  double totalValue = calculateTotalValue();
-  if (totalValue == 0.0) return 0.0;
-
-  double positionValue = getPosition(ticker)->getPositionValue();
-  return (positionValue / totalValue) * 100.0;
-}
-
-vector<Position*> Portfolio::getTopPositions(int count) const {
-  vector<Position*> allPositions;
-  for (const auto& pair : positions) {
-    allPositions.push_back(pair.second);
-  }
-
-  // Sort by position value (descending)
-  sort(allPositions.begin(), allPositions.end(),
-       [](const Position* a, const Position* b) {
-         return a->getPositionValue() > b->getPositionValue();
-       });
-
-  // Return top N positions
-  int actualCount = min(count, (int)allPositions.size());
-  return vector<Position*>(allPositions.begin(),
-                           allPositions.begin() + actualCount);
 }
 
 double Portfolio::calculatePortfolioBeta() const {
@@ -358,38 +236,17 @@ void Portfolio::printPortfolioSummary() const {
   cout << "Owner ID: " << ownerId << endl;
   cout << fixed << setprecision(2);
   cout << "Cash Balance: $" << cashBalance << endl;
-  cout << "Positions Value: $" << calculatePositionsValue() << endl;
   cout << "Total Value: $" << calculateTotalValue() << endl;
   cout << "Total Return: " << calculateTotalReturn() << "%" << endl;
   cout << "Unrealised P&L: $" << calculateUnrealisedPnL() << endl;
   cout << "Day Change: $" << calculateDayChange() << endl;
-  cout << "Number of Positions: " << positions.size() << endl;
   cout << "Number of Orders: " << orders.size() << endl;
-  cout << "Watchlist Size: " << watchlist.size() << endl;
 
   // Print creation date
   char buffer[26];
   struct tm* tm_info = localtime(&creationDate);
   strftime(buffer, 26, "%Y-%m-%d %H:%M:%S", tm_info);
   cout << "Created: " << buffer << endl;
-}
-
-void Portfolio::printPositions(string date) {
-  cout << "\nPositions:" << endl;
-  cout << "----------" << endl;
-
-  if (positions.empty()) {
-    cout << "No positions" << endl;
-    return;
-  }
-
-  for (const auto& pair : positions) {
-    Position* pos = pair.second;
-    cout << pos->getTicker() << ": "  // Use inherited method
-         << pos->getQuantity() << " shares @ $" << fixed << setprecision(2)
-         << pos->getCurrentPrice(date)  // Use inherited method
-         << " (P&L: $" << pos->calculateUnrealisedPnL() << ")" << endl;
-  }
 }
 
 void Portfolio::printOrders() const {
@@ -415,29 +272,9 @@ void Portfolio::printOrders() const {
   }
 }
 
-void Portfolio::printWatchlist(string date) {
-  cout << "\nWatchlist:" << endl;
-  cout << "---------" << endl;
-
-  if (watchlist.empty()) {
-    cout << "No stocks in watchlist" << endl;
-    return;
-  }
-
-  for (const auto& pair : watchlist) {
-    Stocks* stock = pair.second;
-    cout << stock->getTicker() << " (" << stock->getCompanyName() << "): $"
-         << fixed << setprecision(2) << stock->getCurrentPrice(date) << endl;
-  }
-}
-
 // Destructor
 Portfolio::~Portfolio() {
   // Clean up positions
-  for (auto& pair : positions) {
-    delete pair.second;
-  }
-  positions.clear();
 
   // Clean up orders
   for (Order* order : orders) {
@@ -447,5 +284,4 @@ Portfolio::~Portfolio() {
 
   // Note: We don't delete stocks from watchlist as they might be owned by other
   // objects
-  watchlist.clear();
 }

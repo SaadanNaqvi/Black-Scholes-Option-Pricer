@@ -281,20 +281,8 @@ void User::printPortfolioSummary() const {
     cout << "Total Value: $" << portfolio->calculateTotalValue() << endl;
     cout << "Total Return: " << portfolio->calculateTotalReturn() << "%"
          << endl;
-    cout << "Positions: " << portfolio->getPositions().size() << endl;
     cout << "Orders: " << portfolio->getOrders().size() << endl;
   }
-}
-
-vector<Position*> User::getAllPositions() const {
-  vector<Position*> allPositions;
-  for (const Portfolio* portfolio : portfolios) {
-    auto positions = portfolio->getPositions();
-    for (const auto& pair : positions) {
-      allPositions.push_back(pair.second);
-    }
-  }
-  return allPositions;
 }
 
 vector<Order*> User::getAllOrders() const {
@@ -318,7 +306,6 @@ void User::CSVWrite() {
        << "," << riskTolerance << "," << registrationDate << ","
        << lastLoginDate << "," << isActive << "," << totalInvestmentCapital
        << "\n";
-  fout << userName;
 
   return;
 }

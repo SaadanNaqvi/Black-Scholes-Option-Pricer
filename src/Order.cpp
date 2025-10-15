@@ -172,6 +172,10 @@ void Order::executeOrder(double executionPrice, int executedQuantity,
   lastUpdated = time(0);
 }
 
+void Order::partialFill(double fillPrice, int fillQuantity, string date) {
+  executeOrder(fillPrice, fillQuantity, date);
+}
+
 void Order::cancelOrder() {
   if (status == PENDING || status == PARTIALLY_FILLED) {
     status = CANCELLED;

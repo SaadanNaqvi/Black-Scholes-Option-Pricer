@@ -85,7 +85,6 @@ class User {
   // Utility functions
   void printUserProfile() const;
   void printPortfolioSummary() const;
-  vector<Position*> getAllPositions() const;
   vector<Order*> getAllOrders() const;
 
   void CSVWrite();

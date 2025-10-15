@@ -74,7 +74,6 @@ class Portfolio {
   // Not needed?
   //  Portfolio calculations
   double calculateTotalValue() const;
-  double calculatePositionsValue() const;
   double calculateTotalPnL() const;
   double calculateUnrealisedPnL() const;
   double calculateRealisedPnL() const;
