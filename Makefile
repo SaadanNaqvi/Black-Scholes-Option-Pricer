@@ -29,9 +29,15 @@ dashboard:
 	@echo "Running dashboard..."
 	./dashboard.out
 
+stockTest:
+	@echo "Building stock..."
+	g++ $(CXXFLAGS) src/CSVData.cpp src/Stocks.cpp src/main-stock.cpp -o stock.out
+	@echo "Running stock..."
+	./stock.out
 
 clean:
 	rm -f *.out
 	@echo "🧹 Clean complete"
+
 
 

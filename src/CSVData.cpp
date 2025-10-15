@@ -1,6 +1,6 @@
-#include <bits/stdc++.h>
-
 #include "../include/CSVData.h"
+
+#include <bits/stdc++.h>
 
 // GEt's the header.
 vector<string> functionReader(const stringstream& s) {
@@ -24,7 +24,7 @@ CSVData::CSVData(string ticker) {
 
   // Open the CSV.
   map<string, double> a;
-  fin.open(ticker + ".csv", ios::in);
+  fin.open("assets/stocksData/" + ticker + ".csv", ios::in);
   cout << ticker + ".csv" << endl;
   if (!fin.is_open()) {
     // ADD THE INVALID TICKER MESSAGE LATER.

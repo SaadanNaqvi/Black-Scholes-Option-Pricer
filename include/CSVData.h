@@ -4,13 +4,22 @@
 
 #include <string>
 using namespace std;
+struct stockData {
+  double currentPrice;
+  double openPrice;
+  double closePrice;
+  double highPrice;
+  double lowPrice;
+  long long volume;
+};
+
 class CSVData {
  private:
   map<string, vector<double>> allData;
   vector<string> header;
   string ticker;
   int colSize;
-  
+
  protected:
  public:
   CSVData();
