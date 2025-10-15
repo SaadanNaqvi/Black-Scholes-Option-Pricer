@@ -131,7 +131,7 @@ vector<Order*> Portfolio::getFilledOrders() const {
 
 void Portfolio::processOrders(string date) {
   for (Order* order : orders) {
-    if (order->canExecute()) {
+    if (order->canExecute(date)) {
       // Simplified execution logic - in reality this would be more complex
       double executionPrice = order->getStock()->getCurrentPrice(date);
       int quantityToExecute = order->getRemainingQuantity();
@@ -143,7 +143,7 @@ void Portfolio::processOrders(string date) {
         if (!hasSufficientFunds(totalCost)) continue;
       }
 
-      order->executeOrder(executionPrice, quantityToExecute);
+      order->executeOrder(executionPrice, quantityToExecute, date);
 
       // Update cash balance
       if (order->getOrderType() == BUY ||
@@ -181,11 +181,11 @@ void Portfolio::deductCash(double amount) {
 
 // Portfolio calculations
 double Portfolio::calculateTotalValue() const {
-  return cashBalance + calculatePositionsValue();
+  return cashBalance;
 }
 
 double Portfolio::calculateTotalPnL() const {
-  return calculateUnrealisedPnL() + calculateRealisedPnL();
+  return calculateRealisedPnL();
 }
 
 double Portfolio::calculateRealisedPnL() const {
@@ -238,8 +238,6 @@ void Portfolio::printPortfolioSummary() const {
   cout << "Cash Balance: $" << cashBalance << endl;
   cout << "Total Value: $" << calculateTotalValue() << endl;
   cout << "Total Return: " << calculateTotalReturn() << "%" << endl;
-  cout << "Unrealised P&L: $" << calculateUnrealisedPnL() << endl;
-  cout << "Day Change: $" << calculateDayChange() << endl;
   cout << "Number of Orders: " << orders.size() << endl;
 
   // Print creation date

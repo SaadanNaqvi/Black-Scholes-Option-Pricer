@@ -73,7 +73,6 @@ class User {
   // Financial calculations
   double calculateTotalPortfolioValue() const;
   double calculateTotalCashBalance() const;
-  double calculateTotalUnrealisedPnL() const;
   double calculateTotalRealisedPnL() const;
   double calculateOverallReturn() const;
 

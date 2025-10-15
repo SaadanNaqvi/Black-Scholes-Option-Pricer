@@ -161,14 +161,6 @@ double User::calculateTotalCashBalance() const {
   return totalCash;
 }
 
-double User::calculateTotalUnrealisedPnL() const {
-  double totalUnrealisedPnL = 0.0;
-  for (const Portfolio* portfolio : portfolios) {
-    totalUnrealisedPnL += portfolio->calculateUnrealisedPnL();
-  }
-  return totalUnrealisedPnL;
-}
-
 double User::calculateTotalRealisedPnL() const {
   double totalRealisedPnL = 0.0;
   for (const Portfolio* portfolio : portfolios) {
@@ -246,7 +238,6 @@ void User::printUserProfile() const {
   cout << "Total Portfolio Value: $" << calculateTotalPortfolioValue() << endl;
   cout << "Total Cash Balance: $" << calculateTotalCashBalance() << endl;
   cout << "Overall Return: " << calculateOverallReturn() << "%" << endl;
-  cout << "Total Unrealised P&L: $" << calculateTotalUnrealisedPnL() << endl;
 
   // Print registration date
   char buffer[26];

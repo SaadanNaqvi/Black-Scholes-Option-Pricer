@@ -21,8 +21,6 @@ class Portfolio {
   string ownerId;         // User ID who owns this portfolio
                           // Open positions (ticker -> Position)
   vector<Order*> orders;  // All orders (both active and historical)
-  unordered_map<string, Stocks*>
-      watchlist;  // Stocks being watched (ticker -> Stock)
   double cashBalance;
   double initialValue;         // Starting portfolio value
   double totalPortfolioValue;  // Cached total value calculation
@@ -33,9 +31,7 @@ class Portfolio {
   // Constructors - inherit from Position chain
   Portfolio();
   Portfolio(string portfolioId, string ownerId, double initialCash);
-  Portfolio(string portfolioId, string ownerId, string ticker,
-            string companyName, double currentPrice, int quantity,
-            double entryPrice, double initialCash);
+  Portfolio(string portfolioId, string ownerId, string ticker, string companyName, double currentPrice, int quantity, double entryPrice, double initialCash);
 
   // Virtual destructor
   virtual ~Portfolio();
@@ -75,9 +71,7 @@ class Portfolio {
   //  Portfolio calculations
   double calculateTotalValue() const;
   double calculateTotalPnL() const;
-  double calculateUnrealisedPnL() const;
   double calculateRealisedPnL() const;
-  double calculateDayChange() const;
   double calculateTotalReturn() const;
 
   // Watchlist management

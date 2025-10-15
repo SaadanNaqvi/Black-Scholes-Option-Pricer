@@ -13,8 +13,8 @@ DASHBOARD_SRCS := \
 	src/Portfolio.cpp \
 	src/Order.cpp \
 	src/Stocks.cpp \
-	src/Position.cpp \
 	src/Dropdown.cpp \
+	src/CSVData.cpp	\
 
 # Default target
 all:
