@@ -19,15 +19,13 @@ void Graphics::dashboard() {
         BeginDrawing();
         ClearBackground(BG_COLOR);
 
-        DrawText("Dashboard", 350, 40, 32, TEXT_COLOR);
-
-        if (currentUser) {
-            DrawText(TextFormat("Welcome, %s!", currentUser->getFirstName().c_str()), 50, 100, 22, ACCENT_COLOR);
-        }
+        DrawText("📊 Dashboard", 350, 40, 32, TEXT_COLOR);
+        if (currentUser)
+            DrawText(TextFormat("Welcome, %s!", currentUser->getFirstName().c_str()), 
+                     50, 100, 22, ACCENT_COLOR);
 
         DrawRectangle(50, 150, 350, 250, PANEL_COLOR);
         DrawRectangle(450, 150, 350, 250, PANEL_COLOR);
-
         DrawText("Line Graph Area", 100, 260, 20, TEXT_COLOR);
         DrawText("Bar Graph Area", 500, 260, 20, TEXT_COLOR);
 
@@ -41,9 +39,10 @@ void Graphics::signupScreen() {
     Text firstName({300, 250, 250, 30}, "First name");
     Text lastName({300, 300, 250, 30}, "Last name");
 
-    Button signupBtn({360, 370, 150, 40}, "Create Account");
+    Button signupBtn({360, 370, 150, 40}, "Sign Up");
     Button loginRedirect({380, 430, 100, 30}, "Login →");
 
+    bool accountCreated = false;
     bool done = false;
 
     while (!done && !WindowShouldClose()) {
@@ -53,27 +52,33 @@ void Graphics::signupScreen() {
         DrawText("Create Account", 330, 80, 30, TEXT_COLOR);
 
         username.update(); password.update(); firstName.update(); lastName.update();
-        username.draw(); password.draw(); firstName.draw(); lastName.draw();
+        username.draw();  password.draw();  firstName.draw();  lastName.draw();
 
         signupBtn.draw();
         loginRedirect.draw();
 
+        // -------- Handle signup --------
         if (signupBtn.isClicked()) {
-            if (signupUser(username.getContent(), firstName.getContent(), lastName.getContent(), password.getContent())) {
-                done = true; // success -> auto login
+            if (signupUser(username.getContent(), firstName.getContent(),
+                           lastName.getContent(), password.getContent())) {
+                accountCreated = true;
             }
         }
 
+        // Show success or error feedback
+        if (accountCreated) {
+            DrawText("Account created successfully!", 300, 340, 18, GREEN);
+            DrawText("Click 'Login' to continue.", 320, 365, 18, LIGHTGRAY);
+        }
+
+        // -------- Redirect to login --------
         if (loginRedirect.isClicked()) {
-            // go to login screen
             loginScreen();
-            return; // after login, stop signup screen
+            return;
         }
 
         EndDrawing();
     }
-
-    if (currentUser) dashboard();
 }
 
 void Graphics::loginScreen() {
@@ -83,6 +88,7 @@ void Graphics::loginScreen() {
     Button signupRedirect({360, 360, 150, 30}, "← Sign Up");
 
     bool done = false;
+    bool loginError = false;
 
     while (!done && !WindowShouldClose()) {
         BeginDrawing();
@@ -96,13 +102,19 @@ void Graphics::loginScreen() {
 
         if (loginBtn.isClicked()) {
             if (loginUser(username.getContent(), password.getContent())) {
-                done = true;
+                done = true; // successful login
+            } else {
+                loginError = true;
             }
+        }
+
+        if (loginError) {
+            DrawText("Invalid username or password", 300, 270, 18, RED);
         }
 
         if (signupRedirect.isClicked()) {
             signupScreen();
-            return; // back to signup
+            return;
         }
 
         EndDrawing();

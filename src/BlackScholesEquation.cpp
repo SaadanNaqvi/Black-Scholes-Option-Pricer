@@ -47,8 +47,7 @@ double BlackScholes::D2() {
 // Call equation
 double BlackScholes::callPrice() {
   // formula for Call=Se^(-qt)N(D1)-ke^-(rt)N(D2)
-  return spotPrice * std::exp(-dividendYield * timeToMaturity) * N(D1()) -
-         strikePrice * std::exp(-riskFreeInterestRate * timeToMaturity) *
+  return spotPrice * std::exp(-dividendYield * timeToMaturity) * N(D1()) - strikePrice * std::exp(-riskFreeInterestRate * timeToMaturity) *
              N(D2());
 }
 

@@ -109,8 +109,7 @@ void Stocks::updateCurrentPrice(double price) {
     currentData.currentPrice = price;
 }
 
-void Stocks::updateStockData(double currentPrice, double openPrice, double closePrice,
-                           double highPrice, double lowPrice, long long volume) {
+void Stocks::updateStockData(double currentPrice, double openPrice, double closePrice, double highPrice, double lowPrice, long long volume) {
     // Save current data to history before updating
     if (this->currentData.currentPrice != 0.0) {
         addHistoricalData(this->currentData);
@@ -184,8 +183,7 @@ double Stocks::calculateRisk() const {
 }
 
 void Stocks::displayInfo() const {
-    cout << "[STOCK] " << getClassType() << ": " << ticker << " ($" 
-         << fixed << setprecision(2) << getCurrentPrice() << ")" << endl;
+    cout << "[STOCK] " << getClassType() << ": " << ticker << " ($" << fixed << setprecision(2) << getCurrentPrice() << ")" << endl;
 }
 
 string Stocks::getClassType() const {

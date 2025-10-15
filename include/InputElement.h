@@ -4,10 +4,10 @@
 #include "Graphics.h"
 
 class InputElement : public Graphics {
-protected:
-    Rectangle area;
-public:
-    InputElement(Rectangle rect) : area(rect) {}
+    protected:
+        Rectangle area;
+    public:
+        InputElement(Rectangle rect) : area(rect) {}
 };
 
 #endif

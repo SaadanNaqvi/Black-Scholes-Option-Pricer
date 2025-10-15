@@ -1,1 +1,0 @@
-/usr/bin/c++  -arch arm64 -Wl,-search_paths_first -Wl,-headerpad_max_install_names CMakeFiles/main.dir/src/main.cpp.o -o main   -L/Users/saadannaqvi/Documents/Programming/Black-Scholes-Option-Pricer/lib/SFML-3.0.0/lib  -Wl,-rpath,/Users/saadannaqvi/Documents/Programming/Black-Scholes-Option-Pricer/lib/SFML-3.0.0/lib -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio
