@@ -7,7 +7,9 @@ class Graph : public Graphics {
 protected:
     Rectangle area;
 public:
+
     Graph(Rectangle rect) : area(rect) {}
+    virtual void simulation(float dt) override {}
 };
 
 #endif

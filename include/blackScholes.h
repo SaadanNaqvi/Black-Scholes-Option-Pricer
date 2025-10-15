@@ -7,12 +7,11 @@ using namespace std;
 class BlackScholes {
  private:
   // the required variables for the black scholes equation
-  double spotPrice;
-  double strikePrice;
-  double timeToMaturity;
+  double spotPrice; //Cur price
+  double strikePrice; //User input
+  double timeToMaturity; // user input (start to end date)
   double riskFreeInterestRate;
   double volatilityOfUnderlyingAsset;
-  double dividendYield;
 
   //Greeks
   double delta;
@@ -25,7 +24,7 @@ class BlackScholes {
  public:
   // No deafult constructor cos inputs should be checked before being passed,
   // ensuring validity
-  BlackScholes(double spotPrice, double strikePrice, double timeToMaturity, double riskFreeInterestRate, double volatilityOfUnderlyingAsset, double dividendYield);
+  BlackScholes(double spotPrice, double strikePrice, double timeToMaturity, double riskFreeInterestRate, double volatilityOfUnderlyingAsset);
   
   //Black Schole equation functions
   double D1();

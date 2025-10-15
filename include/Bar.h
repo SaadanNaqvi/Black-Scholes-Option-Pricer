@@ -11,6 +11,7 @@ private:
 public:
     Bar(Rectangle rect, vector<float> vals);
     void draw() override;
+    void simulation(float dt) override;
 };
 
 #endif

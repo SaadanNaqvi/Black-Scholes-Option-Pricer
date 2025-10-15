@@ -11,3 +11,12 @@ void Bar::draw() {
         DrawText(TextFormat("%.0f", values[i]), area.x + i * (barWidth + 10) + 10, area.y + area.height - barHeight - 20, 18, BLACK);
     }
 }
+
+void Bar::simulation(float dt) {
+    // Simple animation: fluctuate values slightly
+    for (auto &v : values) {
+        v += (rand() % 3 - 1) * 2.0f; // small random delta
+    }
+    draw();
+}
+

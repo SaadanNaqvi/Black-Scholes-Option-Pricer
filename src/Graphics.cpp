@@ -3,10 +3,12 @@
 #include "Line.h"
 #include "Bar.h"
 #include "Button.h"
+#include "Dropdown.h"
 #include "Text.h"
 #include "InputElement.h"
 #include "User.h"
 #include <memory>
+#include <fstream>
 using namespace std;
 
 #define BG_COLOR  CLITERAL(Color){ 15, 25, 50, 255 }     // deep navy blue
@@ -15,32 +17,82 @@ using namespace std;
 #define ACCENT_COLOR CLITERAL(Color){ 50, 150, 255, 255 } // blue accent for highlights
 
 void Graphics::dashboard() {
-    while (!WindowShouldClose()) {
+    // Load stock tickers from assets/stocksData
+    vector<string> tickers = {"AAPL", "TSLA", "MSFT", "GOOG"};
+    ifstream file("assets/stocksData");
+    if (file.is_open()) {
+        string ticker;
+        while (file >> ticker) tickers.push_back(ticker);
+    }
+
+    // UI Elements
+    Dropdown tickerSelect({100, 650, 200, 30}, tickers);
+    Dropdown callPut({350, 650, 150, 30}, {"Call", "Put"});
+    Dropdown optionStyle({650, 650, 180, 30}, {"American", "European"});
+
+    Text startDate({100, 720, 180, 30}, "Start Date (YYYY-MM-DD)");
+    Text endDate({360, 720, 180, 30}, "End Date (YYYY-MM-DD)");
+    Text strike({650, 720, 120, 30}, "Strike Price");
+
+    Button executeBtn({100, 550, 150, 40}, "Execute");
+    Button stopBtn({280, 550, 150, 40}, "Stop");
+
+    bool running = true;
+    float simTime = 0.0f;
+
+    while (running && !WindowShouldClose()) {
         BeginDrawing();
         ClearBackground(BG_COLOR);
 
-        DrawText("📊 Dashboard", 350, 40, 32, TEXT_COLOR);
-        if (currentUser)
-            DrawText(TextFormat("Welcome, %s!", currentUser->getFirstName().c_str()), 
-                     50, 100, 22, ACCENT_COLOR);
+        DrawText("Option Simulator Dashboard", 250, 50, 28, TEXT_COLOR);
+        DrawText("Select parameters:", 100, 600, 20, ACCENT_COLOR);
 
-        DrawRectangle(50, 150, 350, 250, PANEL_COLOR);
-        DrawRectangle(450, 150, 350, 250, PANEL_COLOR);
-        DrawText("Line Graph Area", 100, 260, 20, TEXT_COLOR);
-        DrawText("Bar Graph Area", 500, 260, 20, TEXT_COLOR);
+        if (!isSimulating) {
+            // Update only when not simulating
+            tickerSelect.update();
+            callPut.update();
+            optionStyle.update();
+            startDate.update();
+            endDate.update();
+            strike.update();
+
+            if (executeBtn.isClicked()) {
+                isSimulating = true;
+                simTime = 0;
+            }
+        } else {
+            // Simulation logic
+            simulation(GetFrameTime());
+            simTime += GetFrameTime();
+            DrawText(TextFormat("Simulating... %.1fs", simTime), 500, 550, 18, GREEN);
+            if (stopBtn.isClicked()) isSimulating = false;
+        }
+
+        // Draw UI
+        tickerSelect.draw();
+        callPut.draw();
+        optionStyle.draw();
+        startDate.draw();
+        endDate.draw();
+        strike.draw();
+
+        if (!isSimulating)
+            executeBtn.draw();
+        else
+            stopBtn.draw();
 
         EndDrawing();
     }
 }
 
 void Graphics::signupScreen() {
-    Text username({300, 150, 250, 30}, "Enter username");
-    Text password({300, 200, 250, 30}, "Enter password");
-    Text firstName({300, 250, 250, 30}, "First name");
-    Text lastName({300, 300, 250, 30}, "Last name");
+    Text username({300, 125, 250, 30}, "Enter username");
+    Text password({300, 175, 250, 30}, "Enter password");
+    Text firstName({300, 225, 250, 30}, "First name");
+    Text lastName({300, 275, 250, 30}, "Last name");
 
-    Button signupBtn({360, 370, 150, 40}, "Sign Up");
-    Button loginRedirect({380, 430, 100, 30}, "Login →");
+    Button signupBtn({360, 400, 150, 40}, "Sign Up");
+    Button loginRedirect({380, 450, 100, 30}, "Login →");
 
     bool accountCreated = false;
     bool done = false;
@@ -49,7 +101,7 @@ void Graphics::signupScreen() {
         BeginDrawing();
         ClearBackground(BG_COLOR);
 
-        DrawText("Create Account", 330, 80, 30, TEXT_COLOR);
+        DrawText("Create Account", 310, 80, 30, TEXT_COLOR);
 
         username.update(); password.update(); firstName.update(); lastName.update();
         username.draw();  password.draw();  firstName.draw();  lastName.draw();

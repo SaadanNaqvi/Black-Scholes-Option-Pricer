@@ -14,6 +14,7 @@ DASHBOARD_SRCS := \
 	src/Order.cpp \
 	src/Stocks.cpp \
 	src/Position.cpp \
+	src/Dropdown.cpp \
 
 # Default target
 all:

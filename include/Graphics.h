@@ -9,12 +9,14 @@
 #include <unordered_map>
 
 class Graphics {
-    private:
+    protected:
         unordered_map<string, User*> users;
         User* currentUser = nullptr;
+        bool isSimulating = false;
     public:
         virtual void draw() {}
         virtual void update() {}
+        virtual void simulation(float dt) {}
 
         void signupScreen();
         void loginScreen();
@@ -24,6 +26,7 @@ class Graphics {
 
         // Dashboard that assembles everythifong visually
         void dashboard();
+        
 
         User* getCurrentUser();
 };
