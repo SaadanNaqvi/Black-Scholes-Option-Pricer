@@ -10,7 +10,7 @@ class CSVData {
   vector<string> header;
   string ticker;
   int colSize;
-  
+
  protected:
  public:
   CSVData();
