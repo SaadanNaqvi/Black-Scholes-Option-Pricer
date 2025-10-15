@@ -217,11 +217,11 @@ vector<Order*> Portfolio::getFilledOrders() const {
   return filledOrders;
 }
 
-void Portfolio::processOrders() {
+void Portfolio::processOrders(string date) {
   for (Order* order : orders) {
     if (order->canExecute()) {
       // Simplified execution logic - in reality this would be more complex
-      double executionPrice = order->getStock()->getCurrentPrice();
+      double executionPrice = order->getStock()->getCurrentPrice(date);
       int quantityToExecute = order->getRemainingQuantity();
 
       // Check if we have sufficient funds for buy orders
@@ -315,18 +315,6 @@ double Portfolio::calculateRealisedPnL() const {
   double realisedPnL = 0.0;
   // Implementation would depend on tracking closed positions
   return realisedPnL;
-}
-
-double Portfolio::calculateDayChange() const {
-  // Simplified calculation - would need historical data for accurate
-  // implementation
-  double dayChange = 0.0;
-  for (const auto& pair : positions) {
-    double dailyReturn =
-        pair.second->calculateDailyReturn();  // Use inherited method
-    dayChange += pair.second->getPositionValue() * (dailyReturn / 100.0);
-  }
-  return dayChange;
 }
 
 double Portfolio::calculateTotalReturn() const {
@@ -432,7 +420,7 @@ void Portfolio::printPortfolioSummary() const {
   cout << "Created: " << buffer << endl;
 }
 
-void Portfolio::printPositions() const {
+void Portfolio::printPositions(string date) {
   cout << "\nPositions:" << endl;
   cout << "----------" << endl;
 
@@ -445,7 +433,7 @@ void Portfolio::printPositions() const {
     Position* pos = pair.second;
     cout << pos->getTicker() << ": "  // Use inherited method
          << pos->getQuantity() << " shares @ $" << fixed << setprecision(2)
-         << pos->getCurrentPrice()  // Use inherited method
+         << pos->getCurrentPrice(date)  // Use inherited method
          << " (P&L: $" << pos->calculateUnrealisedPnL() << ")" << endl;
   }
 }
@@ -473,7 +461,7 @@ void Portfolio::printOrders() const {
   }
 }
 
-void Portfolio::printWatchlist() const {
+void Portfolio::printWatchlist(string date) {
   cout << "\nWatchlist:" << endl;
   cout << "---------" << endl;
 
@@ -485,7 +473,7 @@ void Portfolio::printWatchlist() const {
   for (const auto& pair : watchlist) {
     Stocks* stock = pair.second;
     cout << stock->getTicker() << " (" << stock->getCompanyName() << "): $"
-         << fixed << setprecision(2) << stock->getCurrentPrice() << endl;
+         << fixed << setprecision(2) << stock->getCurrentPrice(date) << endl;
   }
 }
 
@@ -506,14 +494,4 @@ Portfolio::~Portfolio() {
   // Note: We don't delete stocks from watchlist as they might be owned by other
   // objects
   watchlist.clear();
-}
-
-void Portfolio::CSVWrite() {
-  ofstream file;
-  file.open(ownerId + ".txt", ios::out);
-
-  if (!file.is_open()) {
-    cout << "Error, file could not be made." << endl;
-    return;
-  }
 }

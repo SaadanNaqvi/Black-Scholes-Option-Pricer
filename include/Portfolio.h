@@ -84,7 +84,7 @@ class Portfolio : public Position {
   Order* getOrder(string orderId) const;
   vector<Order*> getPendingOrders() const;
   vector<Order*> getFilledOrders() const;
-  void processOrders();
+  void processOrders(string date);
 
   // Cash management
   // Not necessary.
@@ -115,17 +115,9 @@ class Portfolio : public Position {
 
   // Utility functions
   void printPortfolioSummary() const;
-  void printPositions() const;
+  void printPositions(string date);
   void printOrders() const;
-  void printWatchlist() const;
-
-  // CSV Functions
-
-  // CSV write
-  void CSVWrite();
-
-  // CSV read
-  void CSVRead();
+  void printWatchlist(string date);
 };
 
 #endif
