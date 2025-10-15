@@ -49,14 +49,14 @@ double OptionType::D2() const {
   double sigma = marketParams.volatilityOfUnderlyingAsset;
   double T = marketParams.timeToMaturity;
 
-  return D1() - sigma * std::sqrt(T);
+  return OptionType::D1() - sigma * std::sqrt(T);
 }
 
 // EUROPEAN PRICINGGGG
 
 double EuropeanCall::price() {
-  return N(D1()) * marketParams.spotPrice*std::exp(-marketParams.dividendYield * marketParams.timeToMaturity) -
-         N(D2()) * marketParams.strikePrice *
+  return N(OptionType::D1()) * marketParams.spotPrice*std::exp(-marketParams.dividendYield * marketParams.timeToMaturity) -
+         N(OptionType::D2()) * marketParams.strikePrice *
              std::exp(-marketParams.riskFreeInterestRate *
                       marketParams.timeToMaturity);
 }
@@ -66,13 +66,11 @@ double EuropeanPut::price() {
   return marketParams.strikePrice *
              std::exp(-marketParams.riskFreeInterestRate *
                       marketParams.timeToMaturity) *
-             N(-D2()) -
+             N(-OptionType::D2()) -
          marketParams.spotPrice *
              std::exp(-marketParams.dividendYield *
                       marketParams.timeToMaturity) *
-             N(-D1());
+             N(-OptionType::D1());
 }
 
 // American Shit
-
-

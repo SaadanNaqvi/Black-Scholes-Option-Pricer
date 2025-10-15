@@ -2,46 +2,66 @@
 #define BLACK_SCHOLES_H
 
 #include <cmath>
-using namespace std;
 
-class BlackScholes {
- private:
-  // the required variables for the black scholes equation
-  double spotPrice; //Cur price
-  double strikePrice; //User input
-  double timeToMaturity; // user input (start to end date)
-  double riskFreeInterestRate;
-  double volatilityOfUnderlyingAsset;
+struct Parameters {
+    double spotPrice;
+    double strikePrice;
+    double timeToMaturity;
+    double riskFreeInterestRate;
+    double volatilityOfUnderlyingAsset;
+    double dividendYield;
+};
 
-  //Greeks
-  double delta;
-  double gamma;
-  double vega;
-  double theta;
-  double rho;
+class OptionType {
+protected:
+    Parameters marketParams;
+    double D1() const;
+    double D2() const;
+    double discountedR() const; // e^(-rt)
+    double discountedQ() const; // e^(-qt)
 
+public:
+    explicit OptionType(const Parameters& x) : marketParams(x) {}
+    virtual double price() = 0;
+    virtual ~OptionType() = default;
+};
 
- public:
-  // No deafult constructor cos inputs should be checked before being passed,
-  // ensuring validity
-  BlackScholes(double spotPrice, double strikePrice, double timeToMaturity, double riskFreeInterestRate, double volatilityOfUnderlyingAsset);
-  
-  //Black Schole equation functions
-  double D1();
-  double D2();
-  double callPrice();
-  double putPrice();
+class call : public OptionType {
+public:
+    explicit call(const Parameters &x) : OptionType(x) {}
+    ~call() override = default;
+};
 
-  //Greeks functions
-  double deltaCall();
-  double deltaPut();
-  double gamma();
-  double thetaCall();
-  double thetaPut();
-  double vega();
-  double rhoCall();
-  double rhoPut();
+class put : public OptionType {
+public:
+    explicit put(const Parameters &x) : OptionType(x) {}
+    double D1();
+    double D2();
+    ~put() override = default;
+};
 
+class EuropeanCall : public call {
+public:
+    EuropeanCall(Parameters &x) : call(x) {}
+    double price() override;
+};
+
+class EuropeanPut : public put {
+public:
+    EuropeanPut(Parameters &x) : put(x) {}
+    double price() override;
+};
+
+class AmericanCall : public call {
+public:
+    AmericanCall(Parameters &x) : call(x) {}
+    double price() override;
+};
+
+class AmericanPut : public put {
+public:
+    AmericanPut(Parameters &x) : put(x) {}
+    double price() override;
 };
 
 #endif
