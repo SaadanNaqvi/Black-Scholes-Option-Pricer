@@ -10,6 +10,7 @@ public:
 
     Graph(Rectangle rect) : area(rect) {}
     virtual void simulation(float dt) override {}
+    virtual ~Graph() = default;
 };
 
 #endif

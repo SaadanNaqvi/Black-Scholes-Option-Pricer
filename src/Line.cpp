@@ -1,111 +1,114 @@
 #include "Line.h"
 #include "raylib.h"
 #include <algorithm>
-#include <cmath>
 #include <string>
-using namespace std;
 
-#define AXIS_COLOR   CLITERAL(Color){180, 180, 200, 255}
-#define GRID_COLOR   CLITERAL(Color){55, 65, 100, 255}
-#define TEXT_COLOR   CLITERAL(Color){235, 235, 245, 255}
-#define LINE_COLOR   CLITERAL(Color){80, 180, 255, 255}
+#define LINE_COLOR CLITERAL(Color){80,180,255,255}
+#define TEXT_COLOR CLITERAL(Color){235,235,245,255}
+#define AXIS_COLOR CLITERAL(Color){180,180,200,255}
 
-Line::Line(Rectangle rect, vector<string> t,
-           vector<float> p)
-    : Graph(rect), prices(p), dates(t)
-{
-    if (!prices.empty()) {
-        yMin = *min_element(prices.begin(), prices.end());
-        yMax = *max_element(prices.begin(), prices.end());
-        float margin = (yMax - yMin) * 0.05f;
-        yMin -= margin;
-        yMax += margin;
-    }
-}
-
-// Helper for mapping a price to Y coordinate
+// Helper function
 static float mapY(float price, float minP, float maxP, float y0, float height) {
     if (maxP == minP) return y0 + height / 2;
     float norm = (price - minP) / (maxP - minP);
     return y0 + height - norm * height;
 }
 
-void Line::draw() {
-    if (prices.empty()) {
-        DrawText("No stock data", area.x + 20, area.y + area.height / 2, 20, RED);
-        return;
+// Constructor
+Line::Line(Rectangle rect, vector<string> t, vector<float> p) : Graph(rect), dates(t), prices(p)
+{
+    if (!prices.empty()) {
+        yMin = *std::min_element(prices.begin(), prices.end());
+        yMax = *std::max_element(prices.begin(), prices.end());
+        float margin = (yMax - yMin) * 0.05f;
+        yMin -= margin;
+        yMax += margin;
     }
+    currentIndex = std::clamp((int)(prices.size() * 0.25f), 0, (int)prices.size() - 1);
+}
 
+
+
+// Helper: format date (YYYY-MM-DD → DD/MM/YY)
+static string formatDate(string dateStr) {
+    if (dateStr.size() < 10) return dateStr;
+    return dateStr.substr(8,2) + "/" + dateStr.substr(5,2) + "/" + dateStr.substr(2,2);
+}
+
+void Line::draw() {
+    if (prices.empty()) return;
+
+    // Draw chart border
     DrawRectangleLinesEx(area, 2, AXIS_COLOR);
 
-    int n = prices.size();
-    float stepX = area.width / (float)(n - 1);
+    float stepX = area.width / (float)(prices.size() - 1);
 
-    // ======= GRID + AXES =======
+    // ==== Draw gridlines and Y-axis labels ====
+    int yTicks = 6;
+    for (int i = 0; i <= yTicks; i++) {
+        float yVal = yMin + (yMax - yMin) * (i / (float)yTicks);
+        float yPos = mapY(yVal, yMin, yMax, area.y, area.height);
+        DrawLine(area.x, yPos, area.x + area.width, yPos, Fade(AXIS_COLOR, 0.3f));
+
+        DrawText(TextFormat("%.2f", yVal), area.x - 70, yPos - 10, 16, TEXT_COLOR);
+    }
+
+    // ==== Draw X-axis labels ====
+    int xTicks = 6;
+    int totalPoints = prices.size();
     for (int i = 0; i <= xTicks; i++) {
-        float x = area.x + i * (area.width / xTicks);
-        DrawLine(x, area.y, x, area.y + area.height, GRID_COLOR);
-    }
-    for (int i = 0; i <= yTicks; i++) {
-        float y = area.y + i * (area.height / yTicks);
-        DrawLine(area.x, y, area.x + area.width, y, GRID_COLOR);
-    }
-
-    DrawLine(area.x, area.y, area.x, area.y + area.height, AXIS_COLOR); // Y axis
-    DrawLine(area.x, area.y + area.height, area.x + area.width,
-             area.y + area.height, AXIS_COLOR); // X axis
-
-    // ======= Y-AXIS LABELS (Actual Prices) =======
-    for (int i = 0; i <= yTicks; i++) {
-        float price = yMax - (yMax - yMin) * (i / (float)yTicks);
-        float y = area.y + (area.height / yTicks) * i - 6;
-        DrawText(TextFormat("%.2f", price), area.x - 65, y, 16, TEXT_COLOR);
-    }
-
-    // ======= X-AXIS LABELS (Actual Dates) =======
-    if (!dates.empty()) {
-        int skip = max(1, (int)dates.size() / xTicks);
-        for (int i = 0; i < dates.size(); i += skip) {
-            float x = area.x + i * stepX - 15;
-            string label = dates[i];
-            // Shorten the label to keep it readable (YYYY-MM-DD → MM-DD)
-            if (label.size() >= 10) label = label.substr(5, 5);
-            DrawText(label.c_str(), x, area.y + area.height + 8, 14, TEXT_COLOR);
+        int idx = (int)((i / (float)xTicks) * (totalPoints - 1));
+        float xPos = area.x + idx * stepX;
+        if (idx >= 0 && idx < dates.size()) {
+            DrawLine(xPos, area.y + area.height, xPos, area.y + area.height + 5, AXIS_COLOR);
+            std::string shortDate = formatDate(dates[idx]);
+            DrawText(shortDate.c_str(), xPos - 30, area.y + area.height + 10, 16, TEXT_COLOR);
         }
     }
 
-    // Axis titles
-    DrawText("Price ($)", area.x - 70, area.y - 30, 18, TEXT_COLOR);
-    DrawText("Date →", area.x + area.width / 2 - 20, area.y + area.height + 28, 18, TEXT_COLOR);
-
-    // ======= PRICE LINE =======
+    // ==== Draw animated price line ====
     Vector2 prev = {area.x, mapY(prices[0], yMin, yMax, area.y, area.height)};
-    for (size_t i = 1; i < prices.size(); i++) {
+    for (int i = 1; i <= currentIndex && i < prices.size(); i++) {
         float x = area.x + i * stepX;
         float y = mapY(prices[i], yMin, yMax, area.y, area.height);
         DrawLineV(prev, {x, y}, LINE_COLOR);
         prev = {x, y};
+    }
+
+    // ==== Draw current marker ====
+    if (currentIndex < prices.size()) {
+        float y = mapY(prices[currentIndex], yMin, yMax, area.y, area.height);
+        float x = area.x + currentIndex * stepX;
+        DrawCircle(x, y, 5, RAYWHITE);
+
+        // Date + price label near marker
+        DrawText(TextFormat("%s", formatDate(dates[currentIndex]).c_str()), x + 10, y - 25, 16, TEXT_COLOR);
+        DrawText(TextFormat("$%.2f", prices[currentIndex]), x + 10, y - 5, 16, TEXT_COLOR);
     }
 }
 
 void Line::simulation(float dt) {
-    if (prices.empty()) return;
+    if (!animating || prices.empty()) return;
+    timeAccumulator += dt;
 
-    simulationProgress += dt * 0.4f;
-    int visible = min((int)(simulationProgress * prices.size()), (int)prices.size());
-    if (visible < 2) return;
-
-    float stepX = area.width / (float)(prices.size() - 1);
-    Vector2 prev = {area.x, mapY(prices[0], yMin, yMax, area.y, area.height)};
-
-    // draw partial line while animating
-    for (int i = 1; i < visible; i++) {
-        float x = area.x + i * stepX;
-        float y = mapY(prices[i], yMin, yMax, area.y, area.height);
-        DrawLineV(prev, {x, y}, LINE_COLOR);
-        prev = {x, y};
+    if (timeAccumulator >= 0.05f) {
+        currentIndex = std::min(currentIndex + 1, (int)prices.size() - 1);
+        timeAccumulator = 0.0f;
     }
 
-    // Draw static axes and labels over animation
     draw();
+}
+
+void Line::startAnimation() { animating = true; }
+void Line::stopAnimation() { animating = false; }
+
+void Line::startAnimationFrom(int index) {
+    currentIndex = std::clamp(index, 0, (int)prices.size() - 1);
+    animating = true;
+}
+
+
+std::string Line::getPausedDate() const {
+    if (dates.empty()) return "N/A";
+    return dates[std::min(currentIndex, (int)dates.size() - 1)];
 }

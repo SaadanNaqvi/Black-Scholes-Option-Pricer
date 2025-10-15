@@ -14,6 +14,9 @@ class Graphics {
         unordered_map<string, User*> users;
         User* currentUser = nullptr;
         bool isSimulating = false;
+    private:
+        int pausedIndex = 0;
+        string pausedTicker = "";
     public:
         virtual void draw() {}
         virtual void update() {}

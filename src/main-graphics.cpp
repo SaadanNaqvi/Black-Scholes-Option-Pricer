@@ -1,7 +1,7 @@
 #include "Graphics.h"
 
 int main() {
-    InitWindow(900, 800, "Black Scholes Option Simulator");
+    InitWindow(1280, 720, "Black Scholes Option Simulator");
     SetTargetFPS(60);
 
     Graphics g;
