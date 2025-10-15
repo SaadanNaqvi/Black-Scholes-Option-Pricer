@@ -9,8 +9,7 @@
 using namespace std;
 
 // Default constructor - calls Position default constructor
-Portfolio::Portfolio() : Position() {
-  portfolioId = generateId("PORT");
+Portfolio::Portfolio() {
   ownerId = "";
   cashBalance = 10000.0;  // Default starting cash
   initialValue = 10000.0;
@@ -20,8 +19,8 @@ Portfolio::Portfolio() : Position() {
 }
 
 // Constructor with basic portfolio info
-Portfolio::Portfolio(string portfolioId, string ownerId, double initialCash)
-    : Position() {  // Call Position default constructor
+Portfolio::Portfolio(string portfolioId, string ownerId,
+                     double initialCash) {  // Call Position default constructor
   this->portfolioId = portfolioId;
   this->ownerId = ownerId;
   this->cashBalance = initialCash;
@@ -34,8 +33,7 @@ Portfolio::Portfolio(string portfolioId, string ownerId, double initialCash)
 // Constructor with portfolio and initial position
 Portfolio::Portfolio(string portfolioId, string ownerId, string ticker,
                      string companyName, double currentPrice, PositionType type,
-                     int quantity, double entryPrice, double initialCash)
-    : Position(ticker, companyName, currentPrice, type, quantity, entryPrice) {
+                     int quantity, double entryPrice, double initialCash) {
   this->portfolioId = portfolioId;
   this->ownerId = ownerId;
   this->cashBalance = initialCash;
@@ -85,50 +83,6 @@ void Portfolio::setCashBalance(double balance) {
 }
 
 // Override virtual methods from Position/Stocks
-double Portfolio::calculateValue() const {
-  // Portfolio value = cash + all position values
-  return cashBalance + calculatePositionsValue();
-}
-
-double Portfolio::calculateRisk() const {
-  // Portfolio risk = weighted average of position risks
-  double totalValue = calculateValue();
-  if (totalValue == 0.0) return 0.0;
-
-  double weightedRisk = 0.0;
-  for (const auto& pair : positions) {
-    double positionValue = pair.second->getPositionValue();
-    double positionRisk = pair.second->calculateRisk();
-    double weight = positionValue / totalValue;
-    weightedRisk += weight * positionRisk;
-  }
-
-  return weightedRisk;
-}
-
-void Portfolio::displayInfo() const {
-  cout << "[PORTFOLIO] " << getClassType() << ": " << portfolioId
-       << " (Owner: " << ownerId << ", Value: $" << fixed << setprecision(2)
-       << calculateValue() << ")" << endl;
-}
-
-string Portfolio::getClassType() const { return "Portfolio"; }
-
-void Portfolio::updateCurrentPrice(double price) {
-  // For portfolio, update the inherited position (if any) and recalculate
-  // totals
-  Position::updateCurrentPrice(price);  // Call parent method
-
-  // Update all positions with new market data if applicable
-  for (auto& pair : positions) {
-    if (pair.second->getTicker() == getTicker()) {
-      pair.second->updateCurrentPrice(price);
-    }
-  }
-
-  totalPortfolioValue = calculateValue();
-  lastUpdated = time(0);
-}
 
 // Position management
 void Portfolio::addPosition(Position* position) {

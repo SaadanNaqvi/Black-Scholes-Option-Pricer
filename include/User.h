@@ -8,7 +8,6 @@
 
 #include "Order.h"
 #include "Portfolio.h"
-#include "Position.h"
 #include "Stocks.h"
 using namespace std;
 
