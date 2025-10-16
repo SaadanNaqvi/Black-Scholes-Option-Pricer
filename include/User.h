@@ -18,6 +18,7 @@ class User {
   string userId;
   string userName;
   string firstName;
+  string password;
   string lastName;
   Portfolio portfolio;
   vector<Portfolio*> portfolios;  // User can have multiple portfolios
@@ -31,7 +32,8 @@ class User {
  public:
   // Constructors
   User();
-  User(string userId, string userName, string firstName, string lastName);
+  User(string userId, string userName, string firstName, string lastName,
+       string password);
   User(string userId, string userName, string firstName, string lastName,
        RiskLevel riskLevel, double riskTolerance);
 
@@ -64,6 +66,8 @@ class User {
   Portfolio* getPortfolio(string portfolioId) const;
   Portfolio* getPrimaryPortfolio() const;
   bool hasPortfolio(string portfolioId) const;
+  void addStock(string ticker, long long quantity);
+  void changePnl(double change);
 
   // User account management
   void updateLastLogin();

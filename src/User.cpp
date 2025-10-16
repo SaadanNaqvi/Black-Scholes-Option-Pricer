@@ -18,10 +18,13 @@ User::User() {
   lastLoginDate = 0;
   isActive = true;
   totalInvestmentCapital = 0.0;
+  portfolios.push_back(new Portfolio());
+  password = "";
 }
 
 // Basic constructor
-User::User(string userId, string userName, string firstName, string lastName) {
+User::User(string userId, string userName, string firstName, string lastName,
+           string password) {
   this->userId = userId;
   this->userName = userName;
   this->firstName = firstName;
@@ -32,6 +35,7 @@ User::User(string userId, string userName, string firstName, string lastName) {
   this->lastLoginDate = 0;
   this->isActive = true;
   this->totalInvestmentCapital = 0.0;
+  this->password = password;
 }
 
 // Full constructor
@@ -253,7 +257,9 @@ void User::printUserProfile() const {
     cout << "Last Login: Never" << endl;
   }
 }
-
+void User::addStock(string ticker, long long quantity) {
+  portfolios[0]->appendStock(ticker, quantity);
+}
 void User::printPortfolioSummary() const {
   cout << "\nPortfolios Summary for " << getFullName() << ":" << endl;
   cout << "==========================================" << endl;
@@ -284,6 +290,10 @@ vector<Order*> User::getAllOrders() const {
   }
   return allOrders;
 }
+void User::changePnl(double change) {
+  portfolios[0]->updatePnl(change);
+  return;
+}
 void User::CSVWrite() {
   ofstream file;
   file.open("userData/" + userName + ".csv", ios::out | ios::trunc);
@@ -292,10 +302,19 @@ void User::CSVWrite() {
     cout << "Error, file could not be made." << endl;
     return;
   }
-  file << userName << "," << firstName << "," << lastName << "," << riskLevel
-       << "," << riskTolerance << "," << registrationDate << ","
-       << lastLoginDate << "," << isActive << "," << totalInvestmentCapital
-       << "\n";
+  file << userName << "," << firstName << "," << lastName << "," << password
+       << "," << riskLevel << "," << riskTolerance << "," << registrationDate
+       << "," << lastLoginDate << "," << isActive << ","
+       << totalInvestmentCapital << "\n";
+  file << portfolios[0]->getCashBalance() << ","
+       << portfolios[0]->getInitialValue() << ","
+       << portfolios[0]->getCreationDate() << portfolios[0]->getLastUpdated()
+       << "," << portfolios[0]->getTotalPnl() << "\n";
+  unordered_map<string, long long> a = portfolios[0]->getStocks();
+  for (auto [x, y] : a) {
+    file << x << "," << y << "\n";
+  }
+  file << "-1";
 
   return;
 }

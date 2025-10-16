@@ -73,6 +73,11 @@ void Portfolio::setCashBalance(double balance) {
   this->cashBalance = balance;
   lastUpdated = time(0);
 }
+void Portfolio::appendStock(string ticker, long long quantity) {
+  stocks[ticker] += quantity;
+  cout << quantity << endl;
+  return;
+}
 
 // Override virtual methods from Position/Stocks
 
@@ -180,13 +185,9 @@ void Portfolio::deductCash(double amount) {
 }
 
 // Portfolio calculations
-double Portfolio::calculateTotalValue() const {
-  return cashBalance;
-}
+double Portfolio::calculateTotalValue() const { return cashBalance; }
 
-double Portfolio::calculateTotalPnL() const {
-  return calculateRealisedPnL();
-}
+double Portfolio::calculateTotalPnL() const { return calculateRealisedPnL(); }
 
 double Portfolio::calculateRealisedPnL() const {
   // This would typically come from closed positions or completed trades
@@ -226,6 +227,11 @@ double Portfolio::calculatePortfolioBeta() const {
 double Portfolio::calculateSharpeRatio() const {
   // Simplified implementation - would need risk-free rate and volatility data
   return 0.0;  // Placeholder
+}
+double Portfolio::getTotalPnl() { return totalPnl; }
+void Portfolio::updatePnl(double change) {
+  totalPnl += change;
+  return;
 }
 
 // Utility functions
@@ -269,7 +275,7 @@ void Portfolio::printOrders() const {
     }
   }
 }
-
+unordered_map<string, long long> Portfolio::getStocks() { return stocks; }
 // Destructor
 Portfolio::~Portfolio() {
   // Clean up positions

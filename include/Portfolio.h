@@ -22,19 +22,26 @@ class Portfolio {
                           // Open positions (ticker -> Position)
   vector<Order*> orders;  // All orders (both active and historical)
   double cashBalance;
+  unordered_map<string, long long> stocks;
   double initialValue;         // Starting portfolio value
   double totalPortfolioValue;  // Cached total value calculation
   time_t creationDate;
   time_t lastUpdated;
+  double totalPnl = 0;
 
  public:
   // Constructors - inherit from Position chain
   Portfolio();
   Portfolio(string portfolioId, string ownerId, double initialCash);
-  Portfolio(string portfolioId, string ownerId, string ticker, string companyName, double currentPrice, int quantity, double entryPrice, double initialCash);
+  Portfolio(string portfolioId, string ownerId, string ticker,
+            string companyName, double currentPrice, int quantity,
+            double entryPrice, double initialCash);
 
   // Virtual destructor
   virtual ~Portfolio();
+
+  // get stocks.
+  unordered_map<string, long long> getStocks();
 
   // Portfolio-specific getters
   string getPortfolioId() const;
@@ -51,8 +58,9 @@ class Portfolio {
   void setCashBalance(double balance);
 
   // Order management
-  // TODO:
+  // TODO
   // Adds order to the portfolio.
+  void appendStock(string ticker, long long quantity);
   void addOrder(Order* order);
   // Cancels order from the portfolio (refunds).
   void cancelOrder(string orderId);
@@ -73,6 +81,8 @@ class Portfolio {
   double calculateTotalPnL() const;
   double calculateRealisedPnL() const;
   double calculateTotalReturn() const;
+  void updatePnl(double change);
+  double getTotalPnl();
 
   // Watchlist management
 
