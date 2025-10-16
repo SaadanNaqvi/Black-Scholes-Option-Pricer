@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <string>
 
+using namespace std;
+
 #define LINE_COLOR CLITERAL(Color){80,180,255,255}
 #define TEXT_COLOR CLITERAL(Color){235,235,245,255}
 #define AXIS_COLOR CLITERAL(Color){180,180,200,255}
@@ -18,13 +20,13 @@ static float mapY(float price, float minP, float maxP, float y0, float height) {
 Line::Line(Rectangle rect, vector<string> t, vector<float> p) : Graph(rect), dates(t), prices(p)
 {
     if (!prices.empty()) {
-        yMin = *std::min_element(prices.begin(), prices.end());
-        yMax = *std::max_element(prices.begin(), prices.end());
+        yMin = *min_element(prices.begin(), prices.end());
+        yMax = *max_element(prices.begin(), prices.end());
         float margin = (yMax - yMin) * 0.05f;
         yMin -= margin;
         yMax += margin;
     }
-    currentIndex = std::clamp((int)(prices.size() * 0.25f), 0, (int)prices.size() - 1);
+    currentIndex = clamp((int)(prices.size() * 0.25f), 0, (int)prices.size() - 1);
 }
 
 
@@ -61,7 +63,7 @@ void Line::draw() {
         float xPos = area.x + idx * stepX;
         if (idx >= 0 && idx < dates.size()) {
             DrawLine(xPos, area.y + area.height, xPos, area.y + area.height + 5, AXIS_COLOR);
-            std::string shortDate = formatDate(dates[idx]);
+            string shortDate = formatDate(dates[idx]);
             DrawText(shortDate.c_str(), xPos - 30, area.y + area.height + 10, 16, TEXT_COLOR);
         }
     }
@@ -92,7 +94,7 @@ void Line::simulation(float dt) {
     timeAccumulator += dt;
 
     if (timeAccumulator >= 0.05f) {
-        currentIndex = std::min(currentIndex + 1, (int)prices.size() - 1);
+        currentIndex = min(currentIndex + 1, (int)prices.size() - 1);
         timeAccumulator = 0.0f;
     }
 
@@ -103,12 +105,12 @@ void Line::startAnimation() { animating = true; }
 void Line::stopAnimation() { animating = false; }
 
 void Line::startAnimationFrom(int index) {
-    currentIndex = std::clamp(index, 0, (int)prices.size() - 1);
+    currentIndex = clamp(index, 0, (int)prices.size() - 1);
     animating = true;
 }
 
 
-std::string Line::getPausedDate() const {
+string Line::getPausedDate() const {
     if (dates.empty()) return "N/A";
-    return dates[std::min(currentIndex, (int)dates.size() - 1)];
+    return dates[min(currentIndex, (int)dates.size() - 1)];
 }

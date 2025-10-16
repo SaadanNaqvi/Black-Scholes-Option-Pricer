@@ -12,6 +12,7 @@
 #include <memory>
 #include <fstream>
 #include <algorithm>
+#include "DatePicker.h"
 using namespace std;
 
 // ==== Theme Colors ====
@@ -25,27 +26,29 @@ void Graphics::dashboard() {
     if (!IsWindowReady()) InitWindow(1280, 720, "Option Simulator Dashboard");
     SetTargetFPS(60);
 
-    // Load available tickers
-    vector<string> tickers = {"AAPL", "AMD", "AMZN", "ATVI", "BABA", "BAC", "CRM", "CSCO", "DIS", "EA", "F", "GOOG", "INTC", "JPM", "KO", "MCD", "META", "MSFT", "MTCH", "NFLX", "NVDA", "PFE", "PYPL", "T", "TSLA", "TTD", "WMT", "XOM", "YELP", "ZG"};
+    // === Load available tickers ===
+    vector<string> tickers = {"AAPL", "AMD", "AMZN", "ATVI", "BABA", "BAC", "CRM", "CSCO", "DIS", "EA", "F",
+                              "GOOG", "INTC", "JPM", "KO", "MCD", "META", "MSFT", "MTCH", "NFLX", "NVDA",
+                              "PFE", "PYPL", "T", "TSLA", "TTD", "WMT", "XOM", "YELP", "ZG"};
     ifstream file("assets/stocksData");
     if (file.is_open()) {
         string ticker;
         while (file >> ticker) tickers.push_back(ticker);
     }
 
-    // UI Inputs
+    // === UI Inputs ===
     Dropdown tickerSelect({90, 70, 180, 35}, tickers);
     Dropdown callPut({290, 70, 120, 35}, {"Call", "Put"});
     Dropdown optionStyle({430, 70, 180, 35}, {"American", "European"});
     Text strike({630, 70, 120, 35}, "Strike");
-    Text startDate({770, 70, 150, 35}, "Start Date");
-    Text endDate({940, 70, 150, 35}, "End Date");
+    DatePicker startDatePicker({770, 70, 150, 35}, {});
+    DatePicker endDatePicker({940, 70, 150, 35}, {});
 
-    // Actions Buttons
+    // === Action Buttons ===
     Button executeBtn({1110, 70, 120, 40}, "Execute ▶");
     Button stopBtn({1110, 120, 120, 40}, "Stop ⏸");
 
-    // Graph setup
+    // === Graph setup ===
     Rectangle priceGraphRect = {90, 160, 900, 380};
     Rectangle pnlGraphRect   = {90, 570, 760, 120};
     Rectangle greeksPanelRect = {870, 570, 320, 120};
@@ -56,63 +59,72 @@ void Graphics::dashboard() {
     bool running = true;
     float simTime = 0.0f;
 
-    // Main running loop
+    static vector<string> dates;
+    static vector<float> prices;
+
     while (running && !WindowShouldClose()) {
         BeginDrawing();
         ClearBackground(BG_COLOR);
-
         DrawText("Option Simulator Dashboard", 420, 15, 34, TEXT_COLOR);
 
         // ==== Control panel ====
         DrawRectangleRounded({70, 60, 1140, 110}, 0.05f, 0, PANEL_COLOR);
+
+        // Update UI
         tickerSelect.update();
         callPut.update();
         optionStyle.update();
         strike.update();
-        startDate.update();
-        endDate.update();
+        startDatePicker.update();
+        endDatePicker.update();
 
+        // Draw UI
         tickerSelect.drawBase();
         callPut.drawBase();
         optionStyle.drawBase();
         strike.draw();
-        startDate.draw();
-        endDate.draw();
+        startDatePicker.drawBase();
+        endDatePicker.drawBase();
 
         if (!isSimulating) executeBtn.draw();
         else stopBtn.draw();
 
-        // ==== Simulation trigger ====
-        if (!isSimulating && executeBtn.isClicked()) {
+        // ✅ NEW: When user selects a ticker, instantly load its dates (before execution)
+        string selectedTicker = tickerSelect.getSelectedOption();
+        if (!selectedTicker.empty() && selectedTicker != pausedTicker) {
+            pausedTicker = selectedTicker;
+            pausedIndex = 0;
+            dates.clear();
+            prices.clear();
+
             try {
-                string selectedTicker = tickerSelect.getSelectedOption();
-                if (selectedTicker.empty())
-                    throw runtime_error("Select a stock ticker first.");
-
-                static vector<string> dates;
-                static vector<float> prices;
-
-                bool newTicker = (selectedTicker != pausedTicker);
-                if (newTicker) {
-                    pausedIndex = 0;
-                    pausedTicker = selectedTicker;
-                    dates.clear();
-                    prices.clear();
-
-                    Stocks stock(selectedTicker);
-                    auto data = stock.priceHistory.getAllData();
-                    if (data.empty())
-                        throw runtime_error("No data found for " + selectedTicker);
-
+                Stocks stock(selectedTicker);
+                auto data = stock.priceHistory.getAllData();
+                if (!data.empty()) {
                     for (auto [date, vals] : data) {
                         dates.push_back(date);
                         if (vals.size() >= 4)
-                            prices.push_back(vals[3]); // close price
+                            prices.push_back(vals[3]); // close
                         else if (!vals.empty())
                             prices.push_back(vals[0]);
                     }
+                    startDatePicker.setAvailableDates(dates);
+                    endDatePicker.setAvailableDates(dates);
                 }
+            } catch (...) {
+                // silently ignore if stock data missing
+            }
+        }
 
+        // === Simulation trigger ===
+        if (!isSimulating && executeBtn.isClicked()) {
+            try {
+                if (selectedTicker.empty())
+                    throw runtime_error("Select a stock ticker first.");
+                if (dates.empty() || prices.empty())
+                    throw runtime_error("No data loaded for this stock.");
+
+                // Keep simulation start logic the same
                 int startIndex = max(pausedIndex, (int)(prices.size() * 0.25f));
                 lineGraph = make_unique<Line>(priceGraphRect, dates, prices);
                 pnlGraph  = make_unique<Bar>(pnlGraphRect, vector<float>(prices.begin(), prices.begin() + startIndex));
@@ -132,37 +144,26 @@ void Graphics::dashboard() {
             tickerSelect.close();
             callPut.close();
             optionStyle.close();
+            startDatePicker.close();
+            endDatePicker.close();
 
             if (lineGraph) {
                 lineGraph->stopAnimation();
-                pausedIndex = lineGraph->getCurrentIndex();  // <— save resume point
-                DrawText(TextFormat("Paused on: %s",
-                    lineGraph->getPausedDate().c_str()), 980, 165, 18, YELLOW);
+                pausedIndex = lineGraph->getCurrentIndex();
+                DrawText(TextFormat("Paused on: %s", lineGraph->getPausedDate().c_str()),
+                         980, 165, 18, YELLOW);
             }
         }
 
-
-        // The graph simulation is running
+        // === Simulation active ===
         if (isSimulating) {
             simTime += GetFrameTime();
-            
             if (lineGraph) lineGraph->simulation(GetFrameTime());
             if (pnlGraph) pnlGraph->simulation(GetFrameTime());
             DrawText(TextFormat("Simulating: %.1fs", simTime), 980, 140, 20, GREEN);
-            if (stopBtn.isClicked()) {
-                isSimulating = false;
-                // reset input focus properly
-                tickerSelect.close();
-                callPut.close();
-                optionStyle.close();
-                if (lineGraph) {
-                    lineGraph->stopAnimation();
-                    DrawText(TextFormat("Paused on: %s", lineGraph->getPausedDate().c_str()), 980, 165, 18, YELLOW);
-                }
-            }
         }
 
-        // Draw the graphs different sections
+        // === Graph panels ===
         DrawRectangleRec(priceGraphRect, PANEL_COLOR);
         DrawText("Stock Price Chart", priceGraphRect.x, priceGraphRect.y - 25, 22, ACCENT_COLOR);
 
@@ -172,26 +173,31 @@ void Graphics::dashboard() {
         DrawRectangleRec(greeksPanelRect, PANEL_COLOR);
         DrawText("Option Greeks & Stats", greeksPanelRect.x + 10, greeksPanelRect.y - 25, 22, ACCENT_COLOR);
 
-        // Draw active graphs
         if (lineGraph) lineGraph->draw();
         if (pnlGraph) pnlGraph->draw();
 
-        // PlaceHolder Text
+        // Placeholder Greek stats
         DrawText("Delta:", greeksPanelRect.x + 15, greeksPanelRect.y + 20, 18, TEXT_COLOR);
         DrawText("Gamma:", greeksPanelRect.x + 15, greeksPanelRect.y + 45, 18, TEXT_COLOR);
-        DrawText("Vega:",        greeksPanelRect.x + 15, greeksPanelRect.y + 70, 18, TEXT_COLOR);
-        DrawText("Theta:",       greeksPanelRect.x + 15, greeksPanelRect.y + 95, 18, TEXT_COLOR);
+        DrawText("Vega:",  greeksPanelRect.x + 15, greeksPanelRect.y + 70, 18, TEXT_COLOR);
+        DrawText("Theta:", greeksPanelRect.x + 15, greeksPanelRect.y + 95, 18, TEXT_COLOR);
 
-        if (tickerSelect.getIsOpen()) { callPut.close(); optionStyle.close(); }
-        else if (callPut.getIsOpen()) { tickerSelect.close(); optionStyle.close(); }
-        else if (optionStyle.getIsOpen()) { tickerSelect.close(); callPut.close(); }
+        // === Manage layering (z-order) ===
+        if (tickerSelect.getIsOpen()) { callPut.close(); optionStyle.close(); startDatePicker.close(); endDatePicker.close(); }
+        else if (callPut.getIsOpen()) { tickerSelect.close(); optionStyle.close(); startDatePicker.close(); endDatePicker.close(); }
+        else if (optionStyle.getIsOpen()) { tickerSelect.close(); callPut.close(); startDatePicker.close(); endDatePicker.close(); }
 
+        // Draw expanded menus last
         tickerSelect.drawExpanded();
         callPut.drawExpanded();
         optionStyle.drawExpanded();
+        startDatePicker.drawExpanded();
+        endDatePicker.drawExpanded();
+
         EndDrawing();
     }
 }
+
 
 
 void Graphics::signupScreen() {

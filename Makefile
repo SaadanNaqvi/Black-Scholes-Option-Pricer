@@ -15,6 +15,7 @@ DASHBOARD_SRCS := \
 	src/Stocks.cpp \
 	src/Dropdown.cpp \
 	src/CSVData.cpp	\
+	src/DatePicker.cpp \
 
 # Default target
 all:

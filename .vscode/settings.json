@@ -76,6 +76,19 @@
         "ios": "cpp",
         "locale": "cpp",
         "print": "cpp",
-        "stack": "cpp"
+        "stack": "cpp",
+        "__tree": "cpp",
+        "cfenv": "cpp",
+        "cinttypes": "cpp",
+        "complex": "cpp",
+        "csetjmp": "cpp",
+        "csignal": "cpp",
+        "forward_list": "cpp",
+        "future": "cpp",
+        "list": "cpp",
+        "regex": "cpp",
+        "scoped_allocator": "cpp",
+        "set": "cpp",
+        "valarray": "cpp"
     }
 }
