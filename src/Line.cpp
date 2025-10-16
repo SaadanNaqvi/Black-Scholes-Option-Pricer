@@ -29,7 +29,7 @@ Line::Line(Rectangle rect, vector<string> t, vector<float> p) : Graph(rect), dat
 
 
 
-// Helper: format date (YYYY-MM-DD → DD/MM/YY)
+// format date (YYYY-MM-DD → DD/MM/YY)
 static string formatDate(string dateStr) {
     if (dateStr.size() < 10) return dateStr;
     return dateStr.substr(8,2) + "/" + dateStr.substr(5,2) + "/" + dateStr.substr(2,2);
@@ -43,7 +43,7 @@ void Line::draw() {
 
     float stepX = area.width / (float)(prices.size() - 1);
 
-    // ==== Draw gridlines and Y-axis labels ====
+    // Draw the y-axis grid lines and labels
     int yTicks = 6;
     for (int i = 0; i <= yTicks; i++) {
         float yVal = yMin + (yMax - yMin) * (i / (float)yTicks);
@@ -53,7 +53,7 @@ void Line::draw() {
         DrawText(TextFormat("%.2f", yVal), area.x - 70, yPos - 10, 16, TEXT_COLOR);
     }
 
-    // ==== Draw X-axis labels ====
+    // Draw the labels for the x-axis
     int xTicks = 6;
     int totalPoints = prices.size();
     for (int i = 0; i <= xTicks; i++) {
@@ -66,7 +66,7 @@ void Line::draw() {
         }
     }
 
-    // ==== Draw animated price line ====
+    // Animated price line
     Vector2 prev = {area.x, mapY(prices[0], yMin, yMax, area.y, area.height)};
     for (int i = 1; i <= currentIndex && i < prices.size(); i++) {
         float x = area.x + i * stepX;
