@@ -32,9 +32,16 @@ dashboard:
 
 stockTest:
 	@echo "Building stock..."
-	g++ $(CXXFLAGS) src/CSVData.cpp src/Stocks.cpp src/main-stock.cpp -o stock.out
+	g++ $(CXXFLAGS) src/CSVData.cpp src/Stocks.cpp src/Order.cpp src/CSVData.cpp src/main-stock.cpp -o stock.out
 	@echo "Running stock..."
 	./stock.out
+
+writeTest:
+	@echo "Building stock..."
+	g++ $(CXXFLAGS)  src/Portfolio.cpp src/User.cpp src/Stocks.cpp src/Order.cpp src/CSVData.cpp src/main-write.cpp -o write.out
+	@echo "Running stock..."
+	./write.out
+
 
 clean:
 	rm -f *.out

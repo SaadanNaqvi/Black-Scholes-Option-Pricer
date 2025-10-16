@@ -285,15 +285,14 @@ vector<Order*> User::getAllOrders() const {
   return allOrders;
 }
 void User::CSVWrite() {
-  fstream fout;
   ofstream file;
-  file.open("/userData/" + userName + ".txt", ios::out);
+  file.open("userData/" + userName + ".csv", ios::out | ios::trunc);
 
   if (!file.is_open()) {
     cout << "Error, file could not be made." << endl;
     return;
   }
-  fout << userName << "," << firstName << "," << lastName << "," << riskLevel
+  file << userName << "," << firstName << "," << lastName << "," << riskLevel
        << "," << riskTolerance << "," << registrationDate << ","
        << lastLoginDate << "," << isActive << "," << totalInvestmentCapital
        << "\n";
