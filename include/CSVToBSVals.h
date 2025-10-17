@@ -22,6 +22,7 @@ struct BSInputs {
 };
 
 class BSVarCalc {
+
  private:
   // days between expiry and start
   static int daysBetween(const std::string& ymd1, const std::string& ymd2);
@@ -32,19 +33,18 @@ class BSVarCalc {
   // convert date to num to easier subtract
   static int ymdToSerialDay(int y, int m, int d);
 
-  // get all dates before trade date for volatility
+ public:
+    // get all dates before trade date for volatility
   static std::vector<std::string> datesUpTo(CSVData& px,
                                             const std::string& uptoDate,
                                             int countNeeded);
-
- public:
   // spot from csv
   static double spotPrice(CSVData& px, const std::string& date);
   // year/365
   static double timeToMaturity(const std::string& valuationDate,
                                const std::string& expiryDate);
   // volatility
-  static double historicalVol(CSVData& px, const std::string& uptoDate);
+  static double historicalVol(CSVData& px, const std::string& startDate, const std::string& endDate);
   // dividends
   static double dividendYieldFixed(double annualDivPerShare, double price);
 };

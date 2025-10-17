@@ -13,6 +13,10 @@
 #include <fstream>
 #include <algorithm>
 #include "DatePicker.h"
+#include "blackScholes.h"
+#include "CSVToBSVals.h"
+#include <cmath>
+#include <numbers>
 using namespace std;
 
 // ==== Theme Colors ====
@@ -48,6 +52,7 @@ void Graphics::dashboard() {
     Button executeBtn({1110, 70, 120, 40}, "Execute");
     Button stopBtn({1110, 120, 120, 40}, "Stop⏸");
     Button saveBtn({980, 120, 120, 40}, "Save");
+    Button checkBtn({880, 120, 120, 40}, "Check");
 
     // === Graph setup ===
     Rectangle priceGraphRect = {90, 160, 900, 380};
@@ -62,6 +67,9 @@ void Graphics::dashboard() {
 
     static vector<string> dates;
     static vector<float> prices;
+    double delta = 0.0, gamma = 0.0, vega = 0.0, theta = 0.0, optionPrice = 0.0;
+    bool showBSStats = false;
+
 
     while (running && !WindowShouldClose()) {
         BeginDrawing();
@@ -86,10 +94,100 @@ void Graphics::dashboard() {
         strike.draw();
         startDatePicker.drawBase();
         endDatePicker.drawBase();
-
-        if (!isSimulating) executeBtn.draw();
+        string selectedTicker = tickerSelect.getSelectedOption();
+        if (!isSimulating){
+            executeBtn.draw();
+            checkBtn.draw();
+        }
         else stopBtn.draw();
         saveBtn.draw();
+        if (checkBtn.isClicked()) {
+            try {
+                if (selectedTicker.empty())
+                    throw runtime_error("Select a stock ticker first.");
+                if (dates.empty() || prices.empty())
+                    throw runtime_error("No data loaded for this stock.");
+
+                string startDate = startDatePicker.getSelectedDate();
+                string endDate   = endDatePicker.getSelectedDate();
+                if (startDate.empty() || endDate.empty())
+                    throw runtime_error("Please select start and expiry dates.");
+
+                double strikePrice = stod(strike.getContent());
+                string optionType  = callPut.getSelectedOption();
+                string style       = optionStyle.getSelectedOption();
+
+                Stocks stock(selectedTicker);
+                auto& px = stock.priceHistory;   // This is your CSVData instance
+
+                BSVarCalc calc;
+
+                double S = calc.spotPrice(px, startDate);
+
+                double T = calc.timeToMaturity(startDate, endDate);
+
+                std::vector<std::string> allDates = px.getDates();
+                if (allDates.empty())
+                    throw runtime_error("No dates found for this stock!");
+
+
+                std::string firstDate = allDates.front();
+
+                double sigma = calc.historicalVol(px, allDates.front(), startDate);
+                {
+                    vector<string> volDates = calc.datesUpTo(px, startDate, (int)allDates.size());
+                    if (volDates.front() != firstDate)
+                        volDates.insert(volDates.begin(), firstDate);
+                }
+
+
+                double q = 0.01;   // assume 1% dividend yield
+                double r = 0.02;   // assume 2% risk-free rate
+
+
+                MarketParams mp{S, strikePrice, T, r, q, sigma};
+                EuropeanCall callOption(mp);
+                EuropeanPut putOption(mp);
+                if (style == "European") {
+                    if (optionType == "Call") {
+                        optionPrice = callOption.price();
+                        delta = std::exp(-q * T) * N(callOption.D1());
+                        gamma = std::exp(-q * T) * NDash(callOption.D1()) / (S * sigma * std::sqrt(T));
+                        vega  = S * std::exp(-q * T) * NDash(callOption.D1()) * std::sqrt(T) / 100;
+                        theta = (-S * std::exp(-q * T) * NDash(callOption.D1()) * sigma / (2 * std::sqrt(T))
+                                - r * strikePrice * std::exp(-r * T) * N(callOption.D2())
+                                + q * S * std::exp(-q * T) * N(callOption.D1())) / 365;
+                    } 
+                    else {
+                        optionPrice = putOption.price();
+                        delta = std::exp(-q * T) * (N(callOption.D1()) - 1);
+                        gamma = std::exp(-q * T) * NDash(putOption.D1()) / (S * sigma * std::sqrt(T));
+                        vega  = S * std::exp(-q * T) * NDash(putOption.D1()) * std::sqrt(T) / 100;
+                        theta = (-S * std::exp(-q * T) * NDash(putOption.D1()) * sigma / (2 * std::sqrt(T))
+                                + r * strikePrice * std::exp(-r * T) * N(-putOption.D2())
+                                - q * S * std::exp(-q * T) * N(-putOption.D1())) / 365;
+                    }
+                }
+
+                showBSStats = true;
+
+                // === auto-load graph starting from start date ===
+                auto it = std::find(dates.begin(), dates.end(), startDate);
+                int startIndex = (it != dates.end()) ? std::distance(dates.begin(), it) : 0;
+                lineGraph = make_unique<Line>(priceGraphRect, dates, prices);
+                pnlGraph  = make_unique<Bar>(pnlGraphRect, vector<float>(prices.begin(), prices.begin() + startIndex));
+                lineGraph->startAnimationFrom(startIndex);
+
+                cout << "Computed Black-Scholes for " << selectedTicker << " from " << startDate << endl;
+            }
+            catch (exception &e) {
+                DrawText(e.what(), 100, 155, 20, RED);
+                cerr << "error" << e.what() << endl;
+            }
+        }
+
+
+
         if (saveBtn.isClicked() && getCurrentUser() != nullptr) {
             try {
                 getCurrentUser()->CSVWrite();
@@ -101,7 +199,9 @@ void Graphics::dashboard() {
             }
         }
 
-        string selectedTicker = tickerSelect.getSelectedOption();
+        
+
+        
         if (!selectedTicker.empty() && selectedTicker != pausedTicker) {
             pausedTicker = selectedTicker;
             pausedIndex = 0;
@@ -188,10 +288,18 @@ void Graphics::dashboard() {
         if (pnlGraph) pnlGraph->draw();
 
         // Placeholder Greek stats
-        DrawText("Delta:", greeksPanelRect.x + 15, greeksPanelRect.y + 20, 18, TEXT_COLOR);
-        DrawText("Gamma:", greeksPanelRect.x + 15, greeksPanelRect.y + 45, 18, TEXT_COLOR);
-        DrawText("Vega:",  greeksPanelRect.x + 15, greeksPanelRect.y + 70, 18, TEXT_COLOR);
-        DrawText("Theta:", greeksPanelRect.x + 15, greeksPanelRect.y + 95, 18, TEXT_COLOR);
+        if (showBSStats) {
+            DrawText(TextFormat("Price: %.2f", optionPrice), greeksPanelRect.x + 15, greeksPanelRect.y + 0, 18, GREEN);
+            DrawText(TextFormat("Delta: %.4f", delta), greeksPanelRect.x + 15, greeksPanelRect.y + 25, 18, TEXT_COLOR);
+            DrawText(TextFormat("Gamma: %.4f", gamma), greeksPanelRect.x + 15, greeksPanelRect.y + 50, 18, TEXT_COLOR);
+            DrawText(TextFormat("Vega: %.4f", vega),  greeksPanelRect.x + 15, greeksPanelRect.y + 75, 18, TEXT_COLOR);
+            DrawText(TextFormat("Theta: %.4f", theta), greeksPanelRect.x + 15, greeksPanelRect.y + 100, 18, TEXT_COLOR);
+        }
+        else {
+            DrawText("Press 'Check' to view Black-Scholes stats", greeksPanelRect.x + 15, greeksPanelRect.y + 60, 18, LIGHTGRAY);
+        }
+
+
 
         // === Manage layering (z-order) ===
         if (tickerSelect.getIsOpen()) { callPut.close(); optionStyle.close(); startDatePicker.close(); endDatePicker.close(); }
@@ -347,7 +455,7 @@ bool Graphics::loginUser(string username, string password) {
 
 void Graphics::loadAllUsersFromDisk() {
     string folder = "userData";
-    for (const auto &entry : filesystem::directory_iterator(folder)) {
+    for (auto entry : filesystem::directory_iterator(folder)) {
         if (entry.path().extension() == ".csv") {
             ifstream file(entry.path());
             if (!file.is_open()) continue;
@@ -373,7 +481,7 @@ void Graphics::loadAllUsersFromDisk() {
             file.close();
         }
     }
-    cout << "Loaded " << users.size() << " user(s) from disk.\n";
+    cout << "Loaded " << users.size() << " user(s) from disk." << endl;
 }
 
 

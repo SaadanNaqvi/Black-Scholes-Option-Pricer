@@ -16,6 +16,8 @@ DASHBOARD_SRCS := \
 	src/Dropdown.cpp \
 	src/CSVData.cpp	\
 	src/DatePicker.cpp \
+	src/BlackScholesEquation.cpp \
+	src/BSVarCalc.cpp \
 
 # Default target
 all:

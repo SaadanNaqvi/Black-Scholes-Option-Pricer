@@ -3,65 +3,75 @@
 
 #include <cmath>
 
-struct Parameters {
+// ===== Global helper functions =====
+double N(double x);
+double NDash(double x);
+
+// ===== Struct for market parameters =====
+struct MarketParams {
     double spotPrice;
     double strikePrice;
     double timeToMaturity;
     double riskFreeInterestRate;
-    double volatilityOfUnderlyingAsset;
     double dividendYield;
+    double volatilityOfUnderlyingAsset;
 };
 
+// ===== Base OptionType =====
 class OptionType {
 protected:
-    Parameters marketParams;
+    MarketParams marketParams;
+
+    // internal helpers
+    double discountedR() const; // e^(-rT)
+    double discountedQ() const; // e^(-qT)
+
+public:
+    explicit OptionType(const MarketParams& mp) : marketParams(mp) {}
+    virtual ~OptionType() = default;
+
+    // make D1/D2 accessible for pricing & Greeks
     double D1() const;
     double D2() const;
-    double discountedR() const; // e^(-rt)
-    double discountedQ() const; // e^(-qt)
 
-public:
-    explicit OptionType(const Parameters& x) : marketParams(x) {}
     virtual double price() = 0;
-    virtual ~OptionType() = default;
 };
 
-class call : public OptionType {
+// ===== Call/Put base classes =====
+class Call : public OptionType {
 public:
-    explicit call(const Parameters &x) : OptionType(x) {}
-    ~call() override = default;
+    explicit Call(const MarketParams& mp) : OptionType(mp) {}
 };
 
-class put : public OptionType {
+class Put : public OptionType {
 public:
-    explicit put(const Parameters &x) : OptionType(x) {}
-    double D1();
-    double D2();
-    ~put() override = default;
+    explicit Put(const MarketParams& mp) : OptionType(mp) {}
 };
 
-class EuropeanCall : public call {
+// ===== European options =====
+class EuropeanCall : public Call {
 public:
-    EuropeanCall(Parameters &x) : call(x) {}
+    explicit EuropeanCall(const MarketParams& mp) : Call(mp) {}
     double price() override;
 };
 
-class EuropeanPut : public put {
+class EuropeanPut : public Put {
 public:
-    EuropeanPut(Parameters &x) : put(x) {}
+    explicit EuropeanPut(const MarketParams& mp) : Put(mp) {}
     double price() override;
 };
 
-class AmericanCall : public call {
+// ===== American options (optional placeholder) =====
+class AmericanCall : public Call {
 public:
-    AmericanCall(Parameters &x) : call(x) {}
+    explicit AmericanCall(const MarketParams& mp) : Call(mp) {}
     double price() override;
 };
 
-class AmericanPut : public put {
+class AmericanPut : public Put {
 public:
-    AmericanPut(Parameters &x) : put(x) {}
+    explicit AmericanPut(const MarketParams& mp) : Put(mp) {}
     double price() override;
 };
 
-#endif
+#endif // BLACK_SCHOLES_H

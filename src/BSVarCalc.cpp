@@ -15,44 +15,33 @@ double BSVarCalc::timeToMaturity(const std::string& valuationDate,
 }
 
 // finding the running total of the volatility until current date
-double BSVarCalc::historicalVol(CSVData& px, const std::string& uptoDate) {
-  // getting dates from csv
-  std::vector<std::string> dates = datesUpTo(px, uptoDate, 252);
-  // list of all log values for volatility
-  std::vector<double> logReturn;
+double BSVarCalc::historicalVol(CSVData& px, const std::string& startDate, const std::string& endDate) {
+    std::vector<std::string> allDates = px.getDates();
+    std::vector<std::string> filteredDates;
 
-  for (int i = 1; i < (int)dates.size(); ++i) {
-    double priceDay0 = px.closePrice(dates[i - 1]);
-    double priceDay1 = px.closePrice(dates[i]);
-    // calculating the log and storing
-    logReturn.push_back(std::log(priceDay1 / priceDay0));
-  }
-  // avg of all logs
-  double total = 0.0;
-  for (int i = 0; i < (int)logReturn.size(); i++) {
-    total = total + logReturn[i];
-  }
-  double mean = total / logReturn.size();
+    for (const auto& d : allDates) {
+        if (d >= startDate && d <= endDate)
+            filteredDates.push_back(d);
+    }
 
-  // variation from mean
-  double squaredDifference = 0.0;
+    if (filteredDates.size() < 2)
+        throw std::runtime_error("Not enough data to calculate volatility.");
 
-  for (int i = 0; i < (int)logReturn.size(); i++) {
-    double difference = logReturn[i] - mean;
-    squaredDifference = squaredDifference + difference * difference;
-  }
+    std::vector<double> logReturn;
+    for (size_t i = 1; i < filteredDates.size(); ++i) {
+        double p0 = px.closePrice(filteredDates[i - 1]);
+        double p1 = px.closePrice(filteredDates[i]);
+        logReturn.push_back(std::log(p1 / p0));
+    }
 
-  // standard deviation, note: variance=sum(x-mean)^2/(n-1) as a sample not
-  // population
-  double standardDeviationDaily =
-      std::sqrt(squaredDifference) / (logReturn.size() - 1);
-  // Yearly volatility as this is what BS equations need
-  // note 252 is how many actual trading days per year, check csv and u will see
-  // missing dates cos not trading dates
-  double yearlyVolatility = standardDeviationDaily * std::sqrt(252);
+    double mean = std::accumulate(logReturn.begin(), logReturn.end(), 0.0) / logReturn.size();
+    double variance = 0.0;
+    for (double r : logReturn) variance += (r - mean) * (r - mean);
 
-  return yearlyVolatility;
+    double stdDevDaily = std::sqrt(variance / (logReturn.size() - 1));
+    return stdDevDaily * std::sqrt(252); // annualized volatility
 }
+
 
 // dividend calculations
 double BSVarCalc::dividendYieldFixed(double annualDivPerShare, double price) {
