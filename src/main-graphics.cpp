@@ -5,6 +5,7 @@ int main() {
     SetTargetFPS(60);
 
     Graphics g;
+    g.loadAllUsersFromDisk();
 
     // Start at sign-up first
     g.signupScreen();

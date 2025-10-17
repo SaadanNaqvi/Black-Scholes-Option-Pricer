@@ -27,6 +27,7 @@ class Graphics {
 
         bool signupUser(string username, string firstName, string lastName, string password);
         bool loginUser(string username, string password);
+        void loadAllUsersFromDisk();
 
         // Dashboard that assembles everythifong visually
         void dashboard();

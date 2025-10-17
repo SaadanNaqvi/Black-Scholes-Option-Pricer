@@ -36,21 +36,10 @@ User::User(string userId, string userName, string firstName, string lastName,
   this->isActive = true;
   this->totalInvestmentCapital = 0.0;
   this->password = password;
-}
 
-// Full constructor
-User::User(string userId, string userName, string firstName, string lastName,
-           RiskLevel riskLevel, double riskTolerance) {
-  this->userId = userId;
-  this->userName = userName;
-  this->firstName = firstName;
-  this->lastName = lastName;
-  this->riskLevel = riskLevel;
-  this->riskTolerance = riskTolerance;
-  this->registrationDate = time(0);
-  this->lastLoginDate = 0;
-  this->isActive = true;
-  this->totalInvestmentCapital = 0.0;
+  Portfolio* defaultPortfolio = new Portfolio();
+  defaultPortfolio->setOwnerId(userId);
+  portfolios.push_back(defaultPortfolio);
 }
 
 // Getters
@@ -294,6 +283,7 @@ void User::changePnl(double change) {
   portfolios[0]->updatePnl(change);
   return;
 }
+
 void User::CSVWrite() {
   ofstream file;
   file.open("userData/" + userName + ".csv", ios::out | ios::trunc);
@@ -301,6 +291,10 @@ void User::CSVWrite() {
   if (!file.is_open()) {
     cout << "Error, file could not be made." << endl;
     return;
+  }
+  if (portfolios.empty() || portfolios[0] == nullptr) {
+      cout << "Error: no portfolio for user " << userName << endl;
+      return;
   }
   file << userName << "," << firstName << "," << lastName << "," << password
        << "," << riskLevel << "," << riskTolerance << "," << registrationDate
@@ -318,6 +312,65 @@ void User::CSVWrite() {
 
   return;
 }
+
+void User::CSVRead() {
+    ifstream file("userData/" + userName + ".csv");
+    if (!file.is_open()) {
+        cout << "No saved user data found for " << userName << endl;
+        return;
+    }
+
+    string line;
+    if (getline(file, line)) {
+        stringstream ss(line);
+        string token;
+        vector<string> parts;
+
+        while (getline(ss, token, ',')) {
+            parts.push_back(token);
+        }
+
+        if (parts.size() >= 10) {
+            userName = parts[0];
+            firstName = parts[1];
+            lastName = parts[2];
+            password = parts[3];
+            riskLevel = static_cast<RiskLevel>(stoi(parts[4]));
+            riskTolerance = stod(parts[5]);
+            registrationDate = stol(parts[6]);
+            lastLoginDate = stol(parts[7]);
+            isActive = stoi(parts[8]);
+            totalInvestmentCapital = stod(parts[9]);
+        }
+    }
+
+    // Optionally, reload portfolio data
+    if (getline(file, line)) {
+        stringstream ss(line);
+        string token;
+        vector<string> parts;
+        while (getline(ss, token, ',')) parts.push_back(token);
+        if (parts.size() >= 5) {
+            double cash = stod(parts[0]);
+            double initial = stod(parts[1]);
+            time_t created = stol(parts[2]);
+            time_t updated = stol(parts[3]);
+            double totalPnl = stod(parts[4]);
+
+            Portfolio* p = portfolios.empty() ? new Portfolio() : portfolios[0];
+            p->setCashBalance(cash);
+            p->setInitialValue(initial);
+            p->setCreationDate(created);
+            p->setLastUpdated(updated);
+            p->setTotalPnl(totalPnl);
+
+            if (portfolios.empty()) portfolios.push_back(p);
+        }
+    }
+
+    file.close();
+}
+
 
 // VARIABLES FOR MY CONVENIENCE
 /*  this->userId = userId;

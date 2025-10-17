@@ -39,14 +39,15 @@ void Graphics::dashboard() {
     // === UI Inputs ===
     Dropdown tickerSelect({90, 70, 180, 35}, tickers);
     Dropdown callPut({290, 70, 120, 35}, {"Call", "Put"});
-    Dropdown optionStyle({430, 70, 180, 35}, {"American", "European"});
+    Dropdown optionStyle({430, 70, 180, 35}, {"European","American"});
     Text strike({630, 70, 120, 35}, "Strike");
     DatePicker startDatePicker({770, 70, 150, 35}, {});
     DatePicker endDatePicker({940, 70, 150, 35}, {});
 
     // === Action Buttons ===
-    Button executeBtn({1110, 70, 120, 40}, "Execute ▶");
-    Button stopBtn({1110, 120, 120, 40}, "Stop ⏸");
+    Button executeBtn({1110, 70, 120, 40}, "Execute");
+    Button stopBtn({1110, 120, 120, 40}, "Stop⏸");
+    Button saveBtn({980, 120, 120, 40}, "Save");
 
     // === Graph setup ===
     Rectangle priceGraphRect = {90, 160, 900, 380};
@@ -88,8 +89,18 @@ void Graphics::dashboard() {
 
         if (!isSimulating) executeBtn.draw();
         else stopBtn.draw();
+        saveBtn.draw();
+        if (saveBtn.isClicked() && getCurrentUser() != nullptr) {
+            try {
+                getCurrentUser()->CSVWrite();
+                DrawText("Account saved successfully!", 950, 200, 18, GREEN);
+                cout << "User data saved to CSV for " << getCurrentUser()->getUserName() << endl;
+            } catch (exception &e) {
+                DrawText("Failed to save account!", 950, 200, 18, RED);
+                cerr << "Save error: " << e.what() << endl;
+            }
+        }
 
-        // ✅ NEW: When user selects a ticker, instantly load its dates (before execution)
         string selectedTicker = tickerSelect.getSelectedOption();
         if (!selectedTicker.empty() && selectedTicker != pausedTicker) {
             pausedTicker = selectedTicker;
@@ -293,28 +304,78 @@ void Graphics::loginScreen() {
 
 
 bool Graphics::signupUser(string username, string firstName, string lastName, string password) {
+    // Check for existing user
     if (users.find(username) != users.end()) {
         cout << "Username already exists!" << endl;
         return false;
     }
 
-    User* newUser = new User(username, username, firstName, lastName);
+    // Create a new user with password
+    User* newUser = new User(username, username, firstName, lastName, password);
     users[username] = newUser;
+
+    newUser->activateAccount();  // Set active
+    newUser->updateLastLogin();  // Set login time
+    newUser->CSVWrite();         // Optionally save to file (persistent storage)
+
     cout << "Account created for " << username << endl;
     currentUser = newUser;
     return true;
 }
+
 
 bool Graphics::loginUser(string username, string password) {
     if (users.find(username) == users.end()) {
         cout << "User not found." << endl;
         return false;
     }
-    currentUser = users[username];
-    currentUser->updateLastLogin();
+
+    User* user = users[username];
+    user->CSVRead(); // refresh from file in case of updates
+
+    if (password != user->getPassword()) {
+        cout << "Invalid password." << endl;
+        return false;
+    }
+
+    currentUser = user;
+    user->updateLastLogin();
     cout << "Logged in as " << username << endl;
     return true;
 }
+
+
+void Graphics::loadAllUsersFromDisk() {
+    string folder = "userData";
+    for (const auto &entry : filesystem::directory_iterator(folder)) {
+        if (entry.path().extension() == ".csv") {
+            ifstream file(entry.path());
+            if (!file.is_open()) continue;
+
+            string line;
+            if (getline(file, line)) {
+                stringstream ss(line);
+                vector<string> parts;
+                string token;
+                while (getline(ss, token, ',')) parts.push_back(token);
+
+                if (parts.size() >= 4) {
+                    string uname = parts[0];
+                    string fname = parts[1];
+                    string lname = parts[2];
+                    string pass  = parts[3];
+
+                    User* loadedUser = new User(uname, uname, fname, lname, pass);
+                    loadedUser->CSVRead(); // populate extra fields
+                    users[uname] = loadedUser;
+                }
+            }
+            file.close();
+        }
+    }
+    cout << "Loaded " << users.size() << " user(s) from disk.\n";
+}
+
 
 User* Graphics::getCurrentUser() {
     return currentUser;

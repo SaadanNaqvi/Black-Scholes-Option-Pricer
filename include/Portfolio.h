@@ -69,6 +69,11 @@ class Portfolio {
   vector<Order*> getPendingOrders() const;
   vector<Order*> getFilledOrders() const;
   void processOrders(string date);
+  void setInitialValue(double value) { initialValue = value; }
+  void setCreationDate(time_t date) { creationDate = date; }
+  void setLastUpdated(time_t date) { lastUpdated = date; }
+  void setTotalPnl(double pnl) { totalPnl = pnl; }
+
 
   // Cash management
   // Not necessary.

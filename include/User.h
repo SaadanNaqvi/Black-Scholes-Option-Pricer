@@ -34,8 +34,6 @@ class User {
   User();
   User(string userId, string userName, string firstName, string lastName,
        string password);
-  User(string userId, string userName, string firstName, string lastName,
-       RiskLevel riskLevel, double riskTolerance);
 
   // Getters
   string getUserId() const;
@@ -43,6 +41,7 @@ class User {
   string getFirstName() const;
   string getLastName() const;
   string getFullName() const;
+  string getPassword() const { return password; }
   vector<Portfolio*> getPortfolios() const;
   RiskLevel getRiskLevel() const;
   double getRiskTolerance() const;
