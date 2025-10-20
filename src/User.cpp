@@ -293,8 +293,8 @@ void User::CSVWrite() {
     return;
   }
   if (portfolios.empty() || portfolios[0] == nullptr) {
-      cout << "Error: no portfolio for user " << userName << endl;
-      return;
+    cout << "Error: no portfolio for user " << userName << endl;
+    return;
   }
   file << userName << "," << firstName << "," << lastName << "," << password
        << "," << riskLevel << "," << riskTolerance << "," << registrationDate
@@ -314,64 +314,68 @@ void User::CSVWrite() {
 }
 
 void User::CSVRead() {
-    ifstream file("userData/" + userName + ".csv");
-    if (!file.is_open()) {
-        cout << "No saved user data found for " << userName << endl;
-        return;
+  ifstream file("userData/" + userName + ".csv");
+  if (!file.is_open()) {
+    cout << "No saved user data found for " << userName << endl;
+    return;
+  }
+
+  string line;
+  if (getline(file, line)) {
+    stringstream ss(line);
+    string token;
+    vector<string> parts;
+
+    while (getline(ss, token, ',')) {
+      parts.push_back(token);
     }
 
-    string line;
-    if (getline(file, line)) {
-        stringstream ss(line);
-        string token;
-        vector<string> parts;
-
-        while (getline(ss, token, ',')) {
-            parts.push_back(token);
-        }
-
-        if (parts.size() >= 10) {
-            userName = parts[0];
-            firstName = parts[1];
-            lastName = parts[2];
-            password = parts[3];
-            riskLevel = static_cast<RiskLevel>(stoi(parts[4]));
-            riskTolerance = stod(parts[5]);
-            registrationDate = stol(parts[6]);
-            lastLoginDate = stol(parts[7]);
-            isActive = stoi(parts[8]);
-            totalInvestmentCapital = stod(parts[9]);
-        }
+    if (parts.size() >= 10) {
+      userName = parts[0];
+      firstName = parts[1];
+      lastName = parts[2];
+      password = parts[3];
+      riskLevel = static_cast<RiskLevel>(stoi(parts[4]));
+      riskTolerance = stod(parts[5]);
+      registrationDate = stol(parts[6]);
+      lastLoginDate = stol(parts[7]);
+      isActive = stoi(parts[8]);
+      totalInvestmentCapital = stod(parts[9]);
     }
+  }
 
-    // Optionally, reload portfolio data
-    if (getline(file, line)) {
-        stringstream ss(line);
-        string token;
-        vector<string> parts;
-        while (getline(ss, token, ',')) parts.push_back(token);
-        if (parts.size() >= 5) {
-            double cash = stod(parts[0]);
-            double initial = stod(parts[1]);
-            time_t created = stol(parts[2]);
-            time_t updated = stol(parts[3]);
-            double totalPnl = stod(parts[4]);
+  // Optionally, reload portfolio data
+  if (getline(file, line)) {
+    stringstream ss(line);
+    string token;
+    vector<string> parts;
+    while (getline(ss, token, ',')) parts.push_back(token);
+    if (parts.size() >= 5) {
+      double cash = stod(parts[0]);
+      double initial = stod(parts[1]);
+      time_t created = stol(parts[2]);
+      time_t updated = stol(parts[3]);
+      double totalPnl = stod(parts[4]);
 
-            Portfolio* p = portfolios.empty() ? new Portfolio() : portfolios[0];
-            p->setCashBalance(cash);
-            p->setInitialValue(initial);
-            p->setCreationDate(created);
-            p->setLastUpdated(updated);
-            p->setTotalPnl(totalPnl);
+      Portfolio* p = portfolios.empty() ? new Portfolio() : portfolios[0];
+      p->setCashBalance(cash);
+      p->setInitialValue(initial);
+      p->setCreationDate(created);
+      p->setLastUpdated(updated);
+      p->setTotalPnl(totalPnl);
 
-            if (portfolios.empty()) portfolios.push_back(p);
-        }
+      if (portfolios.empty()) portfolios.push_back(p);
     }
+  }
 
-    file.close();
+  file.close();
 }
-
-
+bool User::canBuy(float cost) {
+  return cost >= portfolios[0]->getCashBalance();
+}
+bool User::canSell(string ticker, float number) {
+  return portfolios[0]->getStocks()[ticker] >= number;
+}
 // VARIABLES FOR MY CONVENIENCE
 /*  this->userId = userId;
   this->userName = userName;

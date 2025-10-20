@@ -17,12 +17,13 @@ vector<string> functionReader(const stringstream& s) {
 
 CSVData::CSVData() {}
 
+
+//input ticker () : type 
 CSVData::CSVData(string ticker) {
-  // Set up filestream.
+
   fstream fin;
   this->ticker = ticker;
 
-  // Open the CSV.
   map<string, double> a;
   fin.open("assets/stocksData/" + ticker + ".csv", ios::in);
   cout << ticker + ".csv" << endl;
@@ -32,18 +33,13 @@ CSVData::CSVData(string ticker) {
     cout << "Invalid Pathway" << endl;
     return;
   }
-  // Set up the strings.
   string stockDetails, check, price, date, category;
-  // Set up the header string
   vector<string> header;
-  // Set up the data vector
   map<string, vector<double>> allData;
-  // Get's the first line.
   getline(fin, category);
   stringstream s(category);
 
   header = functionReader(s);
-  // Loop for all data sets.
   while (getline(fin, stockDetails)) {
     stringstream ss(stockDetails);
     string date;

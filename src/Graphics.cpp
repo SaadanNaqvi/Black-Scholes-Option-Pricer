@@ -318,7 +318,7 @@ void Graphics::dashboard() {
 }
 
 
-
+//has inputs of * 
 void Graphics::signupScreen() {
     if (!IsWindowReady()) InitWindow(1280, 720, "Sign Up");
     SetTargetFPS(60);

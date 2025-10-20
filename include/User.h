@@ -91,7 +91,10 @@ class User {
 
   void CSVWrite();
   void CSVRead();
-  // Destructor
+  // Destructor;
+  bool canBuy(float cost);
+  bool canSell(string ticker, float stock);
+
   ~User();
 };
 

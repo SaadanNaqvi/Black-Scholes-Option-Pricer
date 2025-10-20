@@ -9,7 +9,7 @@ protected:
 public:
 
     Graph(Rectangle rect) : area(rect) {}
-    virtual void simulation(float dt) override {}
+    virtual void simulation(float dt) = 0;
     virtual ~Graph() = default;
 };
 
