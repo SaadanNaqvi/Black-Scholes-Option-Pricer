@@ -18,7 +18,7 @@ double NDash(double x) {
   return (1 / (sqrt(2 * M_PI))) * (std::exp(-(std::pow(x, 2) / 2)));
 }
 
-//not needed
+//
 double OptionType::discountedR() const {
   return std::exp(-marketParams.riskFreeInterestRate *
                   marketParams.timeToMaturity);
@@ -49,7 +49,7 @@ double OptionType::D2() const {
   double sigma = marketParams.volatilityOfUnderlyingAsset;
   double T = marketParams.timeToMaturity;
 
-  return OptionType::D1() - sigma * std::sqrt(T);
+  return D1() - sigma * std::sqrt(T);
 }
 
 // EUROPEAN PRICINGGGG
@@ -73,4 +73,21 @@ double EuropeanPut::price() {
              N(-OptionType::D1());
 }
 
-// American Shit
+// American
+double AmericanCall::price(){
+return N(OptionType::D1()) * marketParams.spotPrice*std::exp(-marketParams.dividendYield * marketParams.timeToMaturity) -
+         N(OptionType::D2()) * marketParams.strikePrice *
+             std::exp(-marketParams.riskFreeInterestRate *
+                      marketParams.timeToMaturity);
+}
+
+double AmericanPut::price(){
+return marketParams.strikePrice *
+             std::exp(-marketParams.riskFreeInterestRate *
+                      marketParams.timeToMaturity) *
+             N(-OptionType::D2()) -
+         marketParams.spotPrice *
+             std::exp(-marketParams.dividendYield *
+                      marketParams.timeToMaturity) *
+             N(-OptionType::D1());
+}

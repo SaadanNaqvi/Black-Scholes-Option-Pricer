@@ -1,0 +1,17 @@
+var{100, 90, 0.5, 0.04, 0, 0.3};
+online answer Call: 15.18
+program answer Call: 15.1822
+online answer put: 3.40
+program answer put: 3.40013
+
+var2{10, 5, 0.3, 0.1, 0.2, 0.5};
+online answer Call: 4.57
+program answer Call: 4.5701
+online answer put: 0.00
+program answer put: 0.00468346
+
+var3{44444, 54111, 3, 0.3, 0.3, 0.4};
+online answer Call: 3,671.74
+program answer Call: 3671.74
+online answer put: 7,602.05
+program answer put: 7602.05
