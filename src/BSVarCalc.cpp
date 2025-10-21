@@ -87,15 +87,24 @@ int BSVarCalc::daysBetween(const std::string& ymd1, const std::string& ymd2) {
 std::vector<std::string> BSVarCalc::datesUpTo(CSVData& px,
                                               const std::string& uptoDate,
                                               int countNeeded) {
-  std::vector<std::string> allDates = px.getDates();
-  std::vector<std::string> filteredDates;
-  filteredDates.reserve(allDates.size());
+    std::vector<std::string> allDates = px.getDates();
+    if (allDates.empty()) throw std::runtime_error("No dates in CSV.");
 
-  for (size_t i = 0; i < allDates.size(); i++) {
-    if (allDates[i] <= uptoDate) {
-      filteredDates.push_back(allDates[i]);
+    // Ensure ascending order once (or guarantee this in CSVData)
+    if (!std::is_sorted(allDates.begin(), allDates.end())) {
+        std::sort(allDates.begin(), allDates.end());
     }
-  }
-  return std::vector<std::string>(filteredDates.end() - countNeeded,
-                                  filteredDates.end());
+
+    // First element strictly greater than uptoDate
+    auto itEnd = std::upper_bound(allDates.begin(), allDates.end(), uptoDate);
+    if (itEnd == allDates.begin()) {
+        throw std::runtime_error("No data on or before uptoDate.");
+    }
+
+    // Clamp window length to what exists
+    const auto avail = static_cast<int>(std::distance(allDates.begin(), itEnd));
+    const int take = std::max(0, std::min(countNeeded, avail));
+    auto itBegin = itEnd - take;
+
+    return std::vector<std::string>(itBegin, itEnd);
 }
