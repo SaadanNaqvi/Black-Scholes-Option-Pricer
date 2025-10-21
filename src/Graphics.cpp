@@ -5,6 +5,7 @@
 #include <fstream>
 #include <memory>
 #include <numbers>
+#include <unordered_map>
 
 #include "Bar.h"
 #include "Button.h"
@@ -22,19 +23,16 @@
 
 using namespace std;
 
-// =============================================================
-//                    DASHBOARD FUNCTION
-// =============================================================
 void Graphics::dashboard() {
     if (!IsWindowReady()) InitWindow(1280, 720, "Option Simulator Dashboard");
     SetTargetFPS(60);
 
     // ---------------------- STOCK TICKERS ----------------------
     vector<string> tickers = {
-        "AAPL", "AMD", "AMZN", "ATVI", "BABA", "BAC", "CRM", "CSCO", "DIS",
-        "EA",   "F",   "GOOG", "INTC", "JPM",  "KO",  "MCD", "META", "MSFT",
-        "MTCH", "NFLX","NVDA", "PFE",  "PYPL", "T",   "TSLA","TTD", "WMT",
-        "XOM",  "YELP","ZG"
+        "AAPL","AMD","AMZN","ATVI","BABA","BAC","CRM","CSCO","DIS",
+        "EA","F","GOOG","INTC","JPM","KO","MCD","META","MSFT",
+        "MTCH","NFLX","NVDA","PFE","PYPL","T","TSLA","TTD","WMT",
+        "XOM","YELP","ZG"
     };
     ifstream file("assets/stocksData");
     if (file.is_open()) {
@@ -49,7 +47,6 @@ void Graphics::dashboard() {
     Text strike({570, 90, 100, 35}, "Strike");
     DatePicker endDatePicker({690, 90, 150, 35}, {});
 
-    // ---------------------- BUTTONS ----------------------------
     Button executeBtn({860, 90, 110, 35}, "Execute");
     Button stopBtn({860, 140, 110, 35}, "Stop");
     Button checkBtn({990, 90, 110, 35}, "Check");
@@ -58,340 +55,307 @@ void Graphics::dashboard() {
     Button buyBtn({770, 120, 100, 40}, "Buy");
     Button ignoreBtn({880, 120, 100, 40}, "Ignore");
 
-
-    // ---------------------- GRAPH PANELS -----------------------
-    Rectangle priceGraphRect  = {100, 220, 900, 330};
-    Rectangle pnlGraphRect    = {100, 570, 700, 120};
-    Rectangle greeksPanelRect = {830, 570, 380, 120};
+    // ---------------------- PANELS ----------------------
+    Rectangle priceGraphRect = {100, 220, 900, 330};
+    Rectangle pnlGraphRect   = {100, 570, 700, 120};
+    Rectangle greeksPanelRect= {830, 570, 380, 120};
 
     unique_ptr<Line> lineGraph;
+    unique_ptr<Bar> cashGraph;
     unique_ptr<Bar> pnlGraph;
 
-    // ---------------------- STATE VARIABLES --------------------
     bool running = true;
     float simTime = 0.0f;
-
     static vector<string> dates;
     static vector<float> prices;
 
-    double delta = 0.0, gamma = 0.0, vega = 0.0, theta = 0.0, optionPrice = 0.0;
-    bool showBSStats = false;
+    // Greeks
+    double delta=0,gamma=0,vega=0,theta=0,optionPrice=0;
+    bool showBSStats=false;
 
-    // Contract-related
-    bool contractActive = false;
-    bool waitingForDecision = false;
-    [[maybe_unused]] bool contractBought = false;
-    string contractStartDate = "";
-    string contractEndDate = "";
+    // Contract
+    bool contractActive=false,waitingForDecision=false,contractBought=false;
+    string contractStartDate="",contractEndDate="";
+
+    // Portfolio
+    User* user=getCurrentUser();
+    if (user) {
+        user->CSVRead(); // restore saved portfolio
+        cout << "Loaded portfolio for " << user->getUserName()
+             << " | Cash: $" << user->getPrimaryPortfolio()->getCashBalance() << endl;
+    }
+    unordered_map<string,double> holdings;
+
+    // Save message fade
+    float saveMsgTimer=0.0f;
+    bool showSaveMsg=false;
 
     // =============================================================
-    //                       MAIN RENDER LOOP
+    //                       MAIN LOOP
     // =============================================================
-    while (running && !WindowShouldClose()) {
+    while(running && !WindowShouldClose()){
         BeginDrawing();
         ClearBackground(BG_COLOR);
 
-        DrawText("Black Scholes Backtester Dashboard", 420, 20, 34, TEXT_COLOR);
+        DrawText("Black-Scholes Backtester Dashboard",380,20,34,TEXT_COLOR);
+        DrawRectangleRounded({80,75,1120,120},0.05f,0,PANEL_COLOR);
+        DrawText("Controls",90,55,22,ACCENT_COLOR);
 
-        // ---------------------- CONTROL PANEL --------------------
-        DrawRectangleRounded({80, 75, 1120, 120}, 0.05f, 0, PANEL_COLOR);
-        DrawText("Controls", 90, 55, 22, ACCENT_COLOR);
+        // ---------------------- UI ----------------------
+        tickerSelect.update(); callPut.update(); optionStyle.update();
+        strike.update(); endDatePicker.update();
+        string selectedTicker=tickerSelect.getSelectedOption();
 
-        // Update UI elements
-        tickerSelect.update();
-        callPut.update();
-        optionStyle.update();
-        strike.update();
-        endDatePicker.update();
+        if(contractActive){
+            DrawRectangleRec(tickerSelect.getBounds(),Fade(GRAY,0.6f));
+            DrawText("Locked",tickerSelect.getBounds().x+50,
+                     tickerSelect.getBounds().y+10,16,LIGHTGRAY);
+        } else tickerSelect.drawBase();
+        callPut.drawBase(); optionStyle.drawBase(); strike.draw(); endDatePicker.drawBase();
 
-        string selectedTicker = tickerSelect.getSelectedOption();
-
-        // ---------------------- UI DRAWING -----------------------
-        if (contractActive) {
-            // Grey out and lock ticker select
-            DrawRectangleRec(tickerSelect.getBounds(), Fade(GRAY, 0.7f));
-            DrawText("Locked", tickerSelect.getBounds().x + 50, tickerSelect.getBounds().y + 10, 16, LIGHTGRAY);
-        } else {
-            tickerSelect.drawBase();
-        }
-
-        callPut.drawBase();
-        optionStyle.drawBase();
-        strike.draw();
-        endDatePicker.drawBase();
-
-        // Buttons
-        if (!isSimulating) {
-            executeBtn.draw();
-            checkBtn.draw();
-        } else {
-            stopBtn.draw();
-        }
+        if(!isSimulating){ executeBtn.draw(); checkBtn.draw(); }
+        else stopBtn.draw();
         saveBtn.draw();
+        if(!contractActive && !isSimulating) startContractBtn.draw();
 
-        if (!contractActive && !isSimulating && !contractStartDate.empty())
-            startContractBtn.draw();
+        // ---------------------- LOAD DATA ----------------------
+        if(!selectedTicker.empty() && selectedTicker!=pausedTicker){
+            pausedTicker=selectedTicker;
+            dates.clear(); prices.clear();
+            try{
+                Stocks stock(selectedTicker);
+                auto data=stock.priceHistory.getAllData();
+                for(auto &[d,v]:data){
+                    dates.push_back(d);
+                    prices.push_back((v.size()>=4)?v[3]:v[0]);
+                }
+                endDatePicker.setAvailableDates(dates);
+            }catch(...){}
+        }
 
-        // =============================================================
-        //                 BLACK-SCHOLES CHECK BUTTON
-        // =============================================================
+        // ---------------------- CHECK BUTTON (Black-Scholes) ----------------------
         if (checkBtn.isClicked()) {
             try {
-                if (selectedTicker.empty())
-                    throw runtime_error("Select a stock ticker first.");
-                if (dates.empty() || prices.empty())
-                    throw runtime_error("No data loaded for this stock.");
-                if (contractStartDate.empty())
-                    throw runtime_error("Pause the simulation first to set start date.");
+                if (selectedTicker.empty()) throw runtime_error("Select a stock ticker first.");
+                if (dates.empty() || prices.empty()) throw runtime_error("No data loaded for this stock.");
+                if (endDatePicker.getSelectedDate().empty()) throw runtime_error("Select expiry date first.");
+                if (strike.getContent().empty()) throw runtime_error("Enter strike price.");
 
-                string startDate = contractStartDate;
+                string startDate = (lineGraph) ? lineGraph->getCurrentDate() : dates.front();
                 string endDate = endDatePicker.getSelectedDate();
-                if (endDate.empty())
-                    throw runtime_error("Please select expiry date first.");
-
-                // 🔒 Prevent contract before current simulation date
-                if (endDate <= startDate)
-                    throw runtime_error("Expiry date must be after current simulation date.");
+                if (endDate <= startDate) throw runtime_error("Expiry must be after start.");
 
                 double strikePrice = stod(strike.getContent());
-                string optionType = callPut.getSelectedOption();
+                string optType = callPut.getSelectedOption();
                 string style = optionStyle.getSelectedOption();
 
                 Stocks stock(selectedTicker);
-                auto& px = stock.priceHistory;
+                auto &px = stock.priceHistory;
                 BSVarCalc calc;
-
                 double S = calc.spotPrice(px, startDate);
                 double T = calc.timeToMaturity(startDate, endDate);
-
-                vector<string> allDates = px.getDates();
-                if (allDates.empty())
-                    throw runtime_error("No dates found for this stock!");
-
-                double sigma = calc.historicalVol(px, allDates.front(), startDate);
+                double sigma = calc.historicalVol(px, px.getDates().front(), startDate);
                 double q = 0.01, r = 0.02;
 
                 MarketParams mp{S, strikePrice, T, r, q, sigma};
-                EuropeanCall callOption(mp);
-                EuropeanPut putOption(mp);
+                EuropeanCall call(mp); 
+                EuropeanPut put(mp);
 
                 if (style == "European") {
-                    if (optionType == "Call") {
-                        optionPrice = callOption.price();
-                        delta = exp(-q * T) * N(callOption.D1());
-                        gamma = exp(-q * T) * NDash(callOption.D1()) / (S * sigma * sqrt(T));
-                        vega  = S * exp(-q * T) * NDash(callOption.D1()) * sqrt(T) / 100;
-                        theta = (-S * exp(-q * T) * NDash(callOption.D1()) * sigma / (2 * sqrt(T))
-                                 - r * strikePrice * exp(-r * T) * N(callOption.D2())
-                                 + q * S * exp(-q * T) * N(callOption.D1())) / 365;
+                    if (optType == "Call") {
+                        optionPrice = call.price();
+                        delta = exp(-q * T) * N(call.D1());
+                        gamma = exp(-q * T) * NDash(call.D1()) / (S * sigma * sqrt(T));
+                        vega  = S * exp(-q * T) * NDash(call.D1()) * sqrt(T) / 100;
+                        theta = (-S * exp(-q * T) * NDash(call.D1()) * sigma / (2 * sqrt(T))
+                                - r * strikePrice * exp(-r * T) * N(call.D2())
+                                + q * S * exp(-q * T) * N(call.D1())) / 365;
                     } else {
-                        optionPrice = putOption.price();
-                        delta = exp(-q * T) * (N(callOption.D1()) - 1);
-                        gamma = exp(-q * T) * NDash(putOption.D1()) / (S * sigma * sqrt(T));
-                        vega  = S * exp(-q * T) * NDash(putOption.D1()) * sqrt(T) / 100;
-                        theta = (-S * exp(-q * T) * NDash(putOption.D1()) * sigma / (2 * sqrt(T))
-                                 + r * strikePrice * exp(-r * T) * N(-putOption.D2())
-                                 - q * S * exp(-q * T) * N(-putOption.D1())) / 365;
+                        optionPrice = put.price();
+                        delta = exp(-q * T) * (N(call.D1()) - 1);
+                        gamma = exp(-q * T) * NDash(put.D1()) / (S * sigma * sqrt(T));
+                        vega  = S * exp(-q * T) * NDash(put.D1()) * sqrt(T) / 100;
+                        theta = (-S * exp(-q * T) * NDash(put.D1()) * sigma / (2 * sqrt(T))
+                                + r * strikePrice * exp(-r * T) * N(-put.D2())
+                                - q * S * exp(-q * T) * N(-put.D1())) / 365;
                     }
                 }
-
                 showBSStats = true;
-                cout << "Computed Black-Scholes from " << startDate << " to " << endDate << endl;
             } catch (exception &e) {
                 DrawText(e.what(), 100, 155, 20, RED);
             }
         }
 
-        // =============================================================
-        //                     CONTRACT LOGIC
-        // =============================================================
+        // ---------------------- START CONTRACT ----------------------
         if (!contractActive && startContractBtn.isClicked()) {
-            if (contractStartDate.empty()) {
-                DrawText("Pause simulation first to set start date!", 100, 155, 20, RED);
-            } else if (endDatePicker.getSelectedDate().empty()) {
-                DrawText("Please select an expiry date first!", 100, 155, 20, RED);
-            } else if (endDatePicker.getSelectedDate() <= contractStartDate) {
+            string expiry = endDatePicker.getSelectedDate();
+            string currentDate = (lineGraph) ? lineGraph->getCurrentDate() : (dates.empty() ? "" : dates.front());
+            if (dates.empty())
+                DrawText("Load a stock first.", 100, 155, 20, RED);
+            else if (strike.getContent().empty())
+                DrawText("Enter strike price!", 100, 155, 20, RED);
+            else if (expiry.empty())
+                DrawText("Select expiry date!", 100, 155, 20, RED);
+            else if (!currentDate.empty() && expiry <= currentDate)
                 DrawText("Expiry date must be after current simulation date!", 100, 155, 20, RED);
-            } else {
+            else {
                 contractActive = true;
-                contractEndDate = endDatePicker.getSelectedDate();
+                contractStartDate = currentDate;
+                contractEndDate = expiry;
                 waitingForDecision = false;
                 contractBought = false;
-                cout << "Started contract: " << contractStartDate << " → " << contractEndDate << endl;
+                cout << "✅ Contract started: " << contractStartDate << " → " << contractEndDate << endl;
             }
         }
 
-        // =============================================================
-        //                       TICKER DATA LOAD
-        // =============================================================
-        if (contractActive) {
-            DrawText("⚠️ Contract active — cannot switch stock.", 100, 155, 20, ORANGE);
+        // ---------------------- SAVE BUTTON ----------------------
+        if(saveBtn.isClicked() && user){
+            user->CSVWrite();
+            saveMsgTimer=2.0f; showSaveMsg=true;
+            cout<<"✅ User data saved for "<<user->getUserName()<<endl;
         }
-        else if (!selectedTicker.empty() && selectedTicker != pausedTicker) {
-            pausedTicker = selectedTicker;
-            pausedIndex = 0;
-            dates.clear();
-            prices.clear();
-
-            try {
-                Stocks stock(selectedTicker);
-                auto data = stock.priceHistory.getAllData();
-                if (!data.empty()) {
-                    for (auto [date, vals] : data) {
-                        dates.push_back(date);
-                        prices.push_back((vals.size() >= 4) ? vals[3] : vals[0]);
-                    }
-                    endDatePicker.setAvailableDates(dates);
-                }
-            } catch (...) {}
+        if(showSaveMsg && saveMsgTimer>0){
+            DrawText("✅ Saved user stats!",920,120,20,Fade(GREEN,saveMsgTimer/2.0f));
+            saveMsgTimer-=GetFrameTime();
+            if(saveMsgTimer<=0) showSaveMsg=false;
         }
 
-        // =============================================================
-        //                    SIMULATION EXECUTION
-        // =============================================================
-        if (!isSimulating && executeBtn.isClicked()) {
-            try {
-                if (selectedTicker.empty())
-                    throw runtime_error("Select a stock ticker first.");
-                if (dates.empty() || prices.empty())
-                    throw runtime_error("No data loaded for this stock.");
-
-                int startIndex = max(pausedIndex, (int)(prices.size() * 0.25f));
-                lineGraph = make_unique<Line>(priceGraphRect, dates, prices);
-                pnlGraph  = make_unique<Bar>(
-                    pnlGraphRect,
-                    vector<float>(prices.begin(), prices.begin() + startIndex)
-                );
-
+        // ---------------------- SIMULATION ----------------------
+        if(!isSimulating && executeBtn.isClicked()){
+            try{
+                if(selectedTicker.empty()) throw runtime_error("Select a stock ticker first.");
+                if(dates.empty()||prices.empty()) throw runtime_error("No data loaded.");
+                int startIndex=max(pausedIndex,(int)(prices.size()*0.25f));
+                lineGraph=make_unique<Line>(priceGraphRect,dates,prices);
                 lineGraph->startAnimationFrom(startIndex);
-                isSimulating = true;
-                simTime = 0;
-            } catch (exception &e) {
-                DrawText(e.what(), 100, 155, 20, RED);
-            }
+                isSimulating=true; simTime=0;
+            }catch(exception&e){ DrawText(e.what(),100,155,20,RED);}
         }
 
-        // =============================================================
-        //                        STOP SIMULATION
-        // =============================================================
-        if (isSimulating && stopBtn.isClicked()) {
-            isSimulating = false;
-            if (lineGraph) {
+        if(isSimulating && stopBtn.isClicked()){
+            isSimulating=false;
+            if(lineGraph){
                 lineGraph->stopAnimation();
-                pausedIndex = lineGraph->getCurrentIndex();
-                contractStartDate = lineGraph->getPausedDate();
-                DrawText(TextFormat("Paused on: %s", contractStartDate.c_str()), 980, 165, 18, YELLOW);
+                pausedIndex=lineGraph->getCurrentIndex();
+                contractStartDate=lineGraph->getPausedDate();
             }
         }
 
-        // =============================================================
-        //                     ACTIVE SIMULATION
-        // =============================================================
-        if (isSimulating) {
-            simTime += GetFrameTime();
-            if (lineGraph) lineGraph->simulation(GetFrameTime());
-            if (pnlGraph)  pnlGraph->simulation(GetFrameTime());
-
-            DrawText(TextFormat("⏱ Simulating: %.1fs", simTime), 980, 140, 20, GREEN);
-
-            if (contractActive && !contractEndDate.empty()) {
-                string currentDate = lineGraph->getCurrentDate();
-                if (currentDate == contractEndDate) {
-                    isSimulating = false;
-                    contractActive = false;
-                    waitingForDecision = true;
-                    lineGraph->stopAnimation();
-                    pausedIndex = lineGraph->getCurrentIndex();
-                    cout << "Contract expired at " << currentDate << endl;
-                }
+        if(isSimulating && lineGraph){
+            simTime+=GetFrameTime();
+            lineGraph->simulation(GetFrameTime());
+            string curDate=lineGraph->getCurrentDate();
+            if(contractActive && curDate==contractEndDate){
+                isSimulating=false;
+                contractActive=false;
+                waitingForDecision=true;
+                cout<<"Contract expired on "<<curDate<<endl;
             }
         }
 
-        // =============================================================
-        //                     DRAW GRAPH PANELS
-        // =============================================================
-        DrawRectangleRec(priceGraphRect, PANEL_COLOR);
-        DrawText("Stock Price Chart", priceGraphRect.x, priceGraphRect.y - 25, 22, ACCENT_COLOR);
+        // ---------------------- DRAW GRAPHS ----------------------
+        DrawRectangleRec(priceGraphRect,PANEL_COLOR);
+        DrawText("Stock Price Chart",priceGraphRect.x,priceGraphRect.y-25,22,ACCENT_COLOR);
+        if(lineGraph) lineGraph->draw();
+
+        // ---------------------- STATIC CASH & PNL GRAPHS ----------------------
+        double cash = user->getPrimaryPortfolio()->getCashBalance();
+        double holdingsValue = 0.0;
+        for (auto &[ticker, qty] : user->getPrimaryPortfolio()->getStocks()) {
+            if (ticker == selectedTicker && lineGraph)
+                holdingsValue += qty * lineGraph->getCurrentPrice();
+            else if (!prices.empty())
+                holdingsValue += qty * prices.back();
+        }
+        double totalValue = cash + holdingsValue;
+        double pnl = totalValue - user->getPrimaryPortfolio()->getInitialValue();
 
         DrawRectangleRec(pnlGraphRect, PANEL_COLOR);
-        DrawText("Portfolio P&L", pnlGraphRect.x, pnlGraphRect.y - 25, 22, ACCENT_COLOR);
+        DrawText("Portfolio Overview", pnlGraphRect.x, pnlGraphRect.y - 25, 22, ACCENT_COLOR);
 
-        DrawRectangleRec(greeksPanelRect, PANEL_COLOR);
-        DrawText("Option Greeks & Stats", greeksPanelRect.x + 10, greeksPanelRect.y - 25, 22, ACCENT_COLOR);
+        Rectangle cashRect = {pnlGraphRect.x + 50, pnlGraphRect.y + 20, 200, 80};
+        Rectangle pnlRect  = {pnlGraphRect.x + 320, pnlGraphRect.y + 20, 200, 80};
 
-        if (lineGraph) lineGraph->draw();
-        if (pnlGraph) pnlGraph->draw();
+        cashGraph = make_unique<Bar>(cashRect, vector<float>{(float)cash});
+        pnlGraph  = make_unique<Bar>(pnlRect, vector<float>{(float)pnl});
 
-        // =============================================================
-        //                   BLACK-SCHOLES GREEKS
-        // =============================================================
-        if (showBSStats) {
-            DrawText(TextFormat("Price: %.2f", optionPrice), greeksPanelRect.x + 15, greeksPanelRect.y + 0, 18, GREEN);
-            DrawText(TextFormat("Delta: %.4f", delta), greeksPanelRect.x + 15, greeksPanelRect.y + 25, 18, TEXT_COLOR);
-            DrawText(TextFormat("Gamma: %.4f", gamma), greeksPanelRect.x + 15, greeksPanelRect.y + 50, 18, TEXT_COLOR);
-            DrawText(TextFormat("Vega: %.4f", vega), greeksPanelRect.x + 15, greeksPanelRect.y + 75, 18, TEXT_COLOR);
-            DrawText(TextFormat("Theta: %.4f", theta), greeksPanelRect.x + 15, greeksPanelRect.y + 100, 18, TEXT_COLOR);
-        } else {
-            DrawText("Press 'Check ⚙️' to view Black-Scholes stats",
-                     greeksPanelRect.x + 15, greeksPanelRect.y + 60, 18, LIGHTGRAY);
-        }
+        DrawText("Cash Balance", cashRect.x, cashRect.y - 22, 18, ACCENT_COLOR);
+        DrawText(TextFormat("$%.2f", cash),
+                cashRect.x + 60, cashRect.y + cashRect.height + 5, 18, LIME);
 
-        // =============================================================
-        //                     CONTRACT POPUP
-        // =============================================================
-        if (waitingForDecision) {
-            Rectangle popup = {
-              static_cast<float>(GetScreenWidth()/2 - 180),
-              static_cast<float>(GetScreenHeight()/2 - 75),
-              360.0f, 150.0f
-          };
+        DrawText("Total P&L", pnlRect.x, pnlRect.y - 22, 18, ACCENT_COLOR);
+        Color pnlColor = (pnl >= 0) ? GREEN : RED;
+        DrawText(TextFormat("%s$%.2f", (pnl >= 0) ? "+" : "-", fabs(pnl)),
+                pnlRect.x + 60, pnlRect.y + pnlRect.height + 5, 18, pnlColor);
 
-            DrawRectangleRounded(popup, 0.1f, 0, DARKGRAY);
-            DrawText("Contract expired", popup.x + 60, popup.y + 20, 22, YELLOW);
-            DrawText("Would you like to buy?", popup.x + 60, popup.y + 55, 18, WHITE);
+        cashGraph->draw();
+        pnlGraph->draw();
 
-            buyBtn.setPosition({popup.x + 40, popup.y + 100});
-            ignoreBtn.setPosition({popup.x + 200, popup.y + 100});
-            buyBtn.draw();
-            ignoreBtn.draw();
+        // Neutral percentage labels
+        float cashBarTop = cashRect.y + 10;
+        float pnlBarTop  = pnlRect.y + 10;
+        DrawText(TextFormat("%.1f%% Portfolio", (cash / totalValue) * 100.0),
+                cashRect.x + 30, cashBarTop - 10, 16, LIGHTGRAY);
+        DrawText(TextFormat("%.1f%% Change", (pnl / totalValue) * 100.0),
+                pnlRect.x + 40, pnlBarTop - 10, 16, LIGHTGRAY);
 
-            if (buyBtn.isClicked()) {
-                waitingForDecision = false;
-                contractBought = true;
-                contractActive = false;
-                contractStartDate.clear();
-                contractEndDate.clear();
-                cout << "User chose to BUY contract." << endl;
+
+
+        // ---------------------- CONTRACT POPUP ----------------------
+        if(waitingForDecision){
+            Rectangle popup={GetScreenWidth()/2.0f-180,GetScreenHeight()/2.0f-75,360,150};
+            DrawRectangleRounded(popup,0.1f,0,DARKGRAY);
+            DrawText("Contract Expired",popup.x+80,popup.y+20,22,YELLOW);
+            DrawText("Execute trade?",popup.x+100,popup.y+55,18,WHITE);
+            buyBtn.setPosition({popup.x+40,popup.y+100});
+            ignoreBtn.setPosition({popup.x+200,popup.y+100});
+            buyBtn.setLabel((callPut.getSelectedOption()=="Put")?"Sell":"Buy");
+            buyBtn.draw(); ignoreBtn.draw();
+
+            if(buyBtn.isClicked() && user){
+                waitingForDecision=false; contractBought=true;
+                float cost=prices[pausedIndex];
+                string ticker=selectedTicker; int quantity=100;
+                double totalCost=cost*quantity;
+                string optType=callPut.getSelectedOption();
+                Portfolio* pf=user->getPrimaryPortfolio();
+                double currentCash=pf->getCashBalance();
+
+                if(optType=="Call" && user->canBuy(totalCost)){
+                    pf->setCashBalance(currentCash-totalCost);
+                    user->addStock(ticker,quantity);
+                    cout<<"Bought "<<quantity<<" "<<ticker<<" @"<<cost<<endl;
+                } else if(optType=="Put" && user->canSell(ticker,quantity)){
+                    pf->setCashBalance(currentCash+totalCost);
+                    user->addStock(ticker,-quantity);
+                    cout<<"Sold "<<quantity<<" "<<ticker<<" @"<<cost<<endl;
+                }
             }
-            if (ignoreBtn.isClicked()) {
-                waitingForDecision = false;
-                contractBought = false;
-                contractActive = false;
-                contractStartDate.clear();
-                contractEndDate.clear();
-                cout << "User chose to IGNORE contract." << endl;
-            }
+            if(ignoreBtn.isClicked()){ waitingForDecision=false; contractBought=false; }
         }
 
-        // =============================================================
-        //                          LAYERING
-        // =============================================================
-        if (tickerSelect.getIsOpen()) {
-            callPut.close(); optionStyle.close(); endDatePicker.close();
-        } else if (callPut.getIsOpen()) {
-            tickerSelect.close(); optionStyle.close(); endDatePicker.close();
-        } else if (optionStyle.getIsOpen()) {
-            tickerSelect.close(); callPut.close(); endDatePicker.close();
+        // ---------------------- GREEKS PANEL ----------------------
+        DrawRectangleRec(greeksPanelRect,PANEL_COLOR);
+        DrawText("Option Greeks & Stats",greeksPanelRect.x+10,greeksPanelRect.y-25,22,ACCENT_COLOR);
+        if(showBSStats){
+            DrawText(TextFormat("Price: %.2f",optionPrice),greeksPanelRect.x+15,greeksPanelRect.y+0,18,GREEN);
+            DrawText(TextFormat("Delta: %.4f",delta),greeksPanelRect.x+15,greeksPanelRect.y+25,18,TEXT_COLOR);
+            DrawText(TextFormat("Gamma: %.4f",gamma),greeksPanelRect.x+15,greeksPanelRect.y+50,18,TEXT_COLOR);
+            DrawText(TextFormat("Vega: %.4f",vega),greeksPanelRect.x+15,greeksPanelRect.y+75,18,TEXT_COLOR);
+            DrawText(TextFormat("Theta: %.4f",theta),greeksPanelRect.x+15,greeksPanelRect.y+100,18,TEXT_COLOR);
         }
 
-        tickerSelect.drawExpanded();
-        callPut.drawExpanded();
-        optionStyle.drawExpanded();
-        endDatePicker.drawExpanded();
+        // ---------------------- LAYER FIX ----------------------
+        if(tickerSelect.getIsOpen()){ callPut.close(); optionStyle.close(); endDatePicker.close(); }
+        else if(callPut.getIsOpen()){ tickerSelect.close(); optionStyle.close(); endDatePicker.close(); }
+        else if(optionStyle.getIsOpen()){ tickerSelect.close(); callPut.close(); endDatePicker.close(); }
+        tickerSelect.drawExpanded(); callPut.drawExpanded();
+        optionStyle.drawExpanded(); endDatePicker.drawExpanded();
 
         EndDrawing();
     }
 }
+
 
 
 

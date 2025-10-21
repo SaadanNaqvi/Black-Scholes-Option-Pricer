@@ -12,3 +12,8 @@ void Button::draw() {
 bool Button::isClicked() {
     return IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(GetMousePosition(), area);
 }
+
+void Button::setLabel(string newLabel) {
+    label = newLabel;
+}
+

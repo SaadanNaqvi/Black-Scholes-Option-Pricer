@@ -89,6 +89,7 @@ class Portfolio {
   void updatePnl(double change);
   double getTotalPnl();
 
+
   // Watchlist management
 
   // Portfolio analysis

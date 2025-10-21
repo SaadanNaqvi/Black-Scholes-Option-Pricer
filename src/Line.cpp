@@ -128,3 +128,10 @@ int Line::getCurrentIndex() const {
     return currentIndex;
 }
 
+float Line::getCurrentPrice() const {
+    if (currentIndex >= 0 && currentIndex < (int)prices.size())
+        return prices[currentIndex];
+    return 0.0f;
+}
+
+

@@ -32,6 +32,7 @@ public:
     void startAnimationFrom(int index);
     void stopAnimation();
     int getCurrentIndex() const;
+    float getCurrentPrice() const;
     std::string getPausedDate() const;
     std::string getCurrentDate() const;
 };

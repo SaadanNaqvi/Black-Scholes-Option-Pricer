@@ -371,14 +371,15 @@ void User::CSVRead() {
   file.close();
 }
 bool User::canBuy(float cost) {
-  portfolios[0]->addCash(-(double)cost);
-  this->changePnl(-(double)cost);
-  // Allow the order.
-  return cost >= portfolios[0]->getCashBalance();
+  // Return true only if the user actually has enough cash
+  return portfolios[0]->getCashBalance() >= cost;
 }
+
 bool User::canSell(string ticker, float number) {
-  return portfolios[0]->getStocks()[ticker] >= number;
+  auto holdings = portfolios[0]->getStocks();
+  return holdings.find(ticker) != holdings.end() && holdings[ticker] >= number;
 }
+
 // VARIABLES FOR MY CONVENIENCE
 /*  this->userId = userId;
   this->userName = userName;

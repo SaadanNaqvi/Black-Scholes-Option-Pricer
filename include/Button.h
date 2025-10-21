@@ -15,6 +15,8 @@ public:
     void draw() override;
     bool isClicked();
     void setPosition(Vector2 pos) { bounds.x = pos.x; bounds.y = pos.y; }
+    void setLabel(string newLabel);
+
 
 };
 
