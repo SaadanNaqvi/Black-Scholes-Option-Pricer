@@ -371,6 +371,9 @@ void User::CSVRead() {
   file.close();
 }
 bool User::canBuy(float cost) {
+  portfolios[0]->addCash(-(double)cost);
+  this->changePnl(-(double)cost);
+  // Allow the order.
   return cost >= portfolios[0]->getCashBalance();
 }
 bool User::canSell(string ticker, float number) {

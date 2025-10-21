@@ -21,9 +21,9 @@ class Graphics {
   string pausedTicker = "";
 
  public:
-  virtual void draw() = 0;
-  virtual void update() = 0;
-  virtual void simulation(float dt) = 0;
+  virtual void draw() {};
+  virtual void update() {};
+  virtual void simulation(float dt) {};
 
   void signupScreen();
   void loginScreen();

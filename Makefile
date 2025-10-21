@@ -17,8 +17,12 @@ DASHBOARD_SRCS := \
 	src/CSVData.cpp	\
 	src/DatePicker.cpp \
 	src/BlackScholesEquation.cpp \
-	src/BSVarCalc.cpp \
+	src/BSVarCalc.cpp 
 
+RAYLIB_PATH:=/raylib
+
+CXXFLAGSL := -std=c++17 -Wall -Isrc -Iinclude -Iraylib/src
+LIBSL     := -L$(RAYLIB_PATH)/build/raylib -lraylib -lm -lpthread -ldl -lGL
 # Default target
 all:
 	@echo "Usage:"
@@ -31,6 +35,12 @@ dashboard:
 	g++ $(CXXFLAGS) $(DASHBOARD_SRCS) -o dashboard.out $(LIBS)
 	@echo "Running dashboard..."
 	./dashboard.out
+
+dashboardL:
+	@echo "Building dashboard..."
+	g++ $(CXXFLAGSL) $(DASHBOARD_SRCS) -o dashboardL.out $(LIBSL)
+	@echo "Running dashboard..."
+	./dashboardL.out
 
 stockTest:
 	@echo "Building stock..."

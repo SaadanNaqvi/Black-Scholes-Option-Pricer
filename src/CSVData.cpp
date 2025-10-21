@@ -17,10 +17,8 @@ vector<string> functionReader(const stringstream& s) {
 
 CSVData::CSVData() {}
 
-
-//input ticker () : type 
+// input ticker () : type
 CSVData::CSVData(string ticker) {
-
   fstream fin;
   this->ticker = ticker;
 
