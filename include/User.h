@@ -32,8 +32,7 @@ class User {
  public:
   // Constructors
   User();
-  User(string userId, string userName, string firstName, string lastName,
-       string password);
+  User(string userId, string userName, string firstName, string lastName, string password);
 
   // Getters
   string getUserId() const;

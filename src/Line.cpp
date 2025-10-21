@@ -8,7 +8,6 @@
 using namespace std;
 
 #define LINE_COLOR CLITERAL(Color){80, 180, 255, 255}
-#define TEXT_COLOR CLITERAL(Color){235, 235, 245, 255}
 #define AXIS_COLOR CLITERAL(Color){180, 180, 200, 255}
 
 // Helper function
@@ -118,3 +117,14 @@ string Line::getPausedDate() const {
   if (dates.empty()) return "N/A";
   return dates[min(currentIndex, (int)dates.size() - 1)];
 }
+
+string Line::getCurrentDate() const {
+    if (dates.empty()) return "N/A";
+    int idx = std::clamp(currentIndex, 0, (int)dates.size() - 1);
+    return dates[idx];
+}
+
+int Line::getCurrentIndex() const {
+    return currentIndex;
+}
+

@@ -19,331 +19,382 @@
 #include "Theme.h"
 #include "User.h"
 #include "blackScholes.h"
+
 using namespace std;
 
-// ==== Theme Colors ====
-#define BG_COLOR CLITERAL(Color){10, 18, 40, 255}
-#define PANEL_COLOR CLITERAL(Color){20, 32, 65, 255}
-#define TEXT_COLOR CLITERAL(Color){235, 235, 245, 255}
-#define ACCENT_COLOR CLITERAL(Color){50, 150, 255, 255}
-#define GRID_COLOR CLITERAL(Color){60, 70, 110, 255}
-
+// =============================================================
+//                    DASHBOARD FUNCTION
+// =============================================================
 void Graphics::dashboard() {
-  if (!IsWindowReady()) InitWindow(1280, 720, "Option Simulator Dashboard");
-  SetTargetFPS(60);
+    if (!IsWindowReady()) InitWindow(1280, 720, "Option Simulator Dashboard");
+    SetTargetFPS(60);
 
-  // === Load available tickers ===
-  vector<string> tickers = {"AAPL", "AMD",  "AMZN", "ATVI", "BABA", "BAC",
-                            "CRM",  "CSCO", "DIS",  "EA",   "F",    "GOOG",
-                            "INTC", "JPM",  "KO",   "MCD",  "META", "MSFT",
-                            "MTCH", "NFLX", "NVDA", "PFE",  "PYPL", "T",
-                            "TSLA", "TTD",  "WMT",  "XOM",  "YELP", "ZG"};
-  ifstream file("assets/stocksData");
-  if (file.is_open()) {
-    string ticker;
-    while (file >> ticker) tickers.push_back(ticker);
-  }
+    // ---------------------- STOCK TICKERS ----------------------
+    vector<string> tickers = {
+        "AAPL", "AMD", "AMZN", "ATVI", "BABA", "BAC", "CRM", "CSCO", "DIS",
+        "EA",   "F",   "GOOG", "INTC", "JPM",  "KO",  "MCD", "META", "MSFT",
+        "MTCH", "NFLX","NVDA", "PFE",  "PYPL", "T",   "TSLA","TTD", "WMT",
+        "XOM",  "YELP","ZG"
+    };
+    ifstream file("assets/stocksData");
+    if (file.is_open()) {
+        string ticker;
+        while (file >> ticker) tickers.push_back(ticker);
+    }
 
-  // === UI Inputs ===
-  Dropdown tickerSelect({90, 70, 180, 35}, tickers);
-  Dropdown callPut({290, 70, 120, 35}, {"Call", "Put"});
-  Dropdown optionStyle({430, 70, 180, 35}, {"European", "American"});
-  Text strike({630, 70, 120, 35}, "Strike");
-  DatePicker startDatePicker({770, 70, 150, 35}, {});
-  DatePicker endDatePicker({940, 70, 150, 35}, {});
+    // ---------------------- UI ELEMENTS ------------------------
+    Dropdown tickerSelect({100, 90, 160, 35}, tickers);
+    Dropdown callPut({280, 90, 100, 35}, {"Call", "Put"});
+    Dropdown optionStyle({400, 90, 150, 35}, {"European", "American"});
+    Text strike({570, 90, 100, 35}, "Strike");
+    DatePicker endDatePicker({690, 90, 150, 35}, {});
 
-  // === Action Buttons ===
-  Button executeBtn({1110, 70, 120, 40}, "Execute");
-  Button stopBtn({1110, 120, 120, 40}, "Stop⏸");
-  Button saveBtn({980, 120, 120, 40}, "Save");
-  Button checkBtn({880, 120, 120, 40}, "Check");
+    // ---------------------- BUTTONS ----------------------------
+    Button executeBtn({860, 90, 110, 35}, "Execute");
+    Button stopBtn({860, 140, 110, 35}, "Stop");
+    Button checkBtn({990, 90, 110, 35}, "Check");
+    Button saveBtn({1110, 90, 110, 35}, "Save");
+    Button startContractBtn({990, 140, 110, 35}, "Start Contract");
+    Button buyBtn({770, 120, 100, 40}, "Buy");
+    Button ignoreBtn({880, 120, 100, 40}, "Ignore");
 
-  // === Graph setup ===
-  Rectangle priceGraphRect = {90, 160, 900, 380};
-  Rectangle pnlGraphRect = {90, 570, 760, 120};
-  Rectangle greeksPanelRect = {870, 570, 320, 120};
 
-  unique_ptr<Line> lineGraph;
-  unique_ptr<Bar> pnlGraph;
+    // ---------------------- GRAPH PANELS -----------------------
+    Rectangle priceGraphRect  = {100, 220, 900, 330};
+    Rectangle pnlGraphRect    = {100, 570, 700, 120};
+    Rectangle greeksPanelRect = {830, 570, 380, 120};
 
-  bool running = true;
-  float simTime = 0.0f;
+    unique_ptr<Line> lineGraph;
+    unique_ptr<Bar> pnlGraph;
 
-  static vector<string> dates;
-  static vector<float> prices;
-  double delta = 0.0, gamma = 0.0, vega = 0.0, theta = 0.0, optionPrice = 0.0;
-  bool showBSStats = false;
+    // ---------------------- STATE VARIABLES --------------------
+    bool running = true;
+    float simTime = 0.0f;
 
-  while (running && !WindowShouldClose()) {
-    BeginDrawing();
-    ClearBackground(BG_COLOR);
-    DrawText("Option Simulator Dashboard", 420, 15, 34, TEXT_COLOR);
+    static vector<string> dates;
+    static vector<float> prices;
 
-    // ==== Control panel ====
-    DrawRectangleRounded({70, 60, 1140, 110}, 0.05f, 0, PANEL_COLOR);
+    double delta = 0.0, gamma = 0.0, vega = 0.0, theta = 0.0, optionPrice = 0.0;
+    bool showBSStats = false;
 
-    // Update UI
-    tickerSelect.update();
-    callPut.update();
-    optionStyle.update();
-    strike.update();
-    startDatePicker.update();
-    endDatePicker.update();
+    // Contract-related
+    bool contractActive = false;
+    bool waitingForDecision = false;
+    [[maybe_unused]] bool contractBought = false;
+    string contractStartDate = "";
+    string contractEndDate = "";
 
-    // Draw UI
-    tickerSelect.drawBase();
-    callPut.drawBase();
-    optionStyle.drawBase();
-    strike.draw();
-    startDatePicker.drawBase();
-    endDatePicker.drawBase();
-    string selectedTicker = tickerSelect.getSelectedOption();
-    if (!isSimulating) {
-      executeBtn.draw();
-      checkBtn.draw();
-    } else
-      stopBtn.draw();
-    saveBtn.draw();
-    if (checkBtn.isClicked()) {
-      try {
-        if (selectedTicker.empty())
-          throw runtime_error("Select a stock ticker first.");
-        if (dates.empty() || prices.empty())
-          throw runtime_error("No data loaded for this stock.");
+    // =============================================================
+    //                       MAIN RENDER LOOP
+    // =============================================================
+    while (running && !WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(BG_COLOR);
 
-        string startDate = startDatePicker.getSelectedDate();
-        string endDate = endDatePicker.getSelectedDate();
-        if (startDate.empty() || endDate.empty())
-          throw runtime_error("Please select start and expiry dates.");
+        DrawText("Black Scholes Backtester Dashboard", 420, 20, 34, TEXT_COLOR);
 
-        double strikePrice = stod(strike.getContent());
-        string optionType = callPut.getSelectedOption();
-        string style = optionStyle.getSelectedOption();
+        // ---------------------- CONTROL PANEL --------------------
+        DrawRectangleRounded({80, 75, 1120, 120}, 0.05f, 0, PANEL_COLOR);
+        DrawText("Controls", 90, 55, 22, ACCENT_COLOR);
 
-        Stocks stock(selectedTicker);
-        auto& px = stock.priceHistory;  // This is your CSVData instance
+        // Update UI elements
+        tickerSelect.update();
+        callPut.update();
+        optionStyle.update();
+        strike.update();
+        endDatePicker.update();
 
-        BSVarCalc calc;
+        string selectedTicker = tickerSelect.getSelectedOption();
 
-        double S = calc.spotPrice(px, startDate);
-
-        double T = calc.timeToMaturity(startDate, endDate);
-
-        std::vector<std::string> allDates = px.getDates();
-        if (allDates.empty())
-          throw runtime_error("No dates found for this stock!");
-
-        std::string firstDate = allDates.front();
-
-        double sigma = calc.historicalVol(px, allDates.front(), startDate);
-        {
-          vector<string> volDates =
-              calc.datesUpTo(px, startDate, (int)allDates.size());
-          if (volDates.front() != firstDate)
-            volDates.insert(volDates.begin(), firstDate);
+        // ---------------------- UI DRAWING -----------------------
+        if (contractActive) {
+            // Grey out and lock ticker select
+            DrawRectangleRec(tickerSelect.getBounds(), Fade(GRAY, 0.7f));
+            DrawText("Locked", tickerSelect.getBounds().x + 50, tickerSelect.getBounds().y + 10, 16, LIGHTGRAY);
+        } else {
+            tickerSelect.drawBase();
         }
 
-        double q = 0.01;  // assume 1% dividend yield
-        double r = 0.02;  // assume 2% risk-free rate
+        callPut.drawBase();
+        optionStyle.drawBase();
+        strike.draw();
+        endDatePicker.drawBase();
 
-        MarketParams mp{S, strikePrice, T, r, q, sigma};
-        EuropeanCall callOption(mp);
-        EuropeanPut putOption(mp);
-        if (style == "European") {
-          if (optionType == "Call") {
-            optionPrice = callOption.price();
-            delta = std::exp(-q * T) * N(callOption.D1());
-            gamma = std::exp(-q * T) * NDash(callOption.D1()) /
-                    (S * sigma * std::sqrt(T));
-            vega = S * std::exp(-q * T) * NDash(callOption.D1()) *
-                   std::sqrt(T) / 100;
-            theta = (-S * std::exp(-q * T) * NDash(callOption.D1()) * sigma /
-                         (2 * std::sqrt(T)) -
-                     r * strikePrice * std::exp(-r * T) * N(callOption.D2()) +
-                     q * S * std::exp(-q * T) * N(callOption.D1())) /
-                    365;
-          } else {
-            optionPrice = putOption.price();
-            delta = std::exp(-q * T) * (N(callOption.D1()) - 1);
-            gamma = std::exp(-q * T) * NDash(putOption.D1()) /
-                    (S * sigma * std::sqrt(T));
-            vega = S * std::exp(-q * T) * NDash(putOption.D1()) * std::sqrt(T) /
-                   100;
-            theta = (-S * std::exp(-q * T) * NDash(putOption.D1()) * sigma /
-                         (2 * std::sqrt(T)) +
-                     r * strikePrice * std::exp(-r * T) * N(-putOption.D2()) -
-                     q * S * std::exp(-q * T) * N(-putOption.D1())) /
-                    365;
-          }
+        // Buttons
+        if (!isSimulating) {
+            executeBtn.draw();
+            checkBtn.draw();
+        } else {
+            stopBtn.draw();
+        }
+        saveBtn.draw();
+
+        if (!contractActive && !isSimulating && !contractStartDate.empty())
+            startContractBtn.draw();
+
+        // =============================================================
+        //                 BLACK-SCHOLES CHECK BUTTON
+        // =============================================================
+        if (checkBtn.isClicked()) {
+            try {
+                if (selectedTicker.empty())
+                    throw runtime_error("Select a stock ticker first.");
+                if (dates.empty() || prices.empty())
+                    throw runtime_error("No data loaded for this stock.");
+                if (contractStartDate.empty())
+                    throw runtime_error("Pause the simulation first to set start date.");
+
+                string startDate = contractStartDate;
+                string endDate = endDatePicker.getSelectedDate();
+                if (endDate.empty())
+                    throw runtime_error("Please select expiry date first.");
+
+                // 🔒 Prevent contract before current simulation date
+                if (endDate <= startDate)
+                    throw runtime_error("Expiry date must be after current simulation date.");
+
+                double strikePrice = stod(strike.getContent());
+                string optionType = callPut.getSelectedOption();
+                string style = optionStyle.getSelectedOption();
+
+                Stocks stock(selectedTicker);
+                auto& px = stock.priceHistory;
+                BSVarCalc calc;
+
+                double S = calc.spotPrice(px, startDate);
+                double T = calc.timeToMaturity(startDate, endDate);
+
+                vector<string> allDates = px.getDates();
+                if (allDates.empty())
+                    throw runtime_error("No dates found for this stock!");
+
+                double sigma = calc.historicalVol(px, allDates.front(), startDate);
+                double q = 0.01, r = 0.02;
+
+                MarketParams mp{S, strikePrice, T, r, q, sigma};
+                EuropeanCall callOption(mp);
+                EuropeanPut putOption(mp);
+
+                if (style == "European") {
+                    if (optionType == "Call") {
+                        optionPrice = callOption.price();
+                        delta = exp(-q * T) * N(callOption.D1());
+                        gamma = exp(-q * T) * NDash(callOption.D1()) / (S * sigma * sqrt(T));
+                        vega  = S * exp(-q * T) * NDash(callOption.D1()) * sqrt(T) / 100;
+                        theta = (-S * exp(-q * T) * NDash(callOption.D1()) * sigma / (2 * sqrt(T))
+                                 - r * strikePrice * exp(-r * T) * N(callOption.D2())
+                                 + q * S * exp(-q * T) * N(callOption.D1())) / 365;
+                    } else {
+                        optionPrice = putOption.price();
+                        delta = exp(-q * T) * (N(callOption.D1()) - 1);
+                        gamma = exp(-q * T) * NDash(putOption.D1()) / (S * sigma * sqrt(T));
+                        vega  = S * exp(-q * T) * NDash(putOption.D1()) * sqrt(T) / 100;
+                        theta = (-S * exp(-q * T) * NDash(putOption.D1()) * sigma / (2 * sqrt(T))
+                                 + r * strikePrice * exp(-r * T) * N(-putOption.D2())
+                                 - q * S * exp(-q * T) * N(-putOption.D1())) / 365;
+                    }
+                }
+
+                showBSStats = true;
+                cout << "Computed Black-Scholes from " << startDate << " to " << endDate << endl;
+            } catch (exception &e) {
+                DrawText(e.what(), 100, 155, 20, RED);
+            }
         }
 
-        showBSStats = true;
-
-        // === auto-load graph starting from start date ===
-        auto it = std::find(dates.begin(), dates.end(), startDate);
-        int startIndex =
-            (it != dates.end()) ? std::distance(dates.begin(), it) : 0;
-        lineGraph = make_unique<Line>(priceGraphRect, dates, prices);
-        pnlGraph = make_unique<Bar>(
-            pnlGraphRect,
-            vector<float>(prices.begin(), prices.begin() + startIndex));
-        lineGraph->startAnimationFrom(startIndex);
-
-        cout << "Computed Black-Scholes for " << selectedTicker << " from "
-             << startDate << endl;
-      } catch (exception& e) {
-        DrawText(e.what(), 100, 155, 20, RED);
-        cerr << "error" << e.what() << endl;
-      }
-    }
-
-    if (saveBtn.isClicked() && getCurrentUser() != nullptr) {
-      try {
-        getCurrentUser()->CSVWrite();
-        DrawText("Account saved successfully!", 950, 200, 18, GREEN);
-        cout << "User data saved to CSV for " << getCurrentUser()->getUserName()
-             << endl;
-      } catch (exception& e) {
-        DrawText("Failed to save account!", 950, 200, 18, RED);
-        cerr << "Save error: " << e.what() << endl;
-      }
-    }
-
-    if (!selectedTicker.empty() && selectedTicker != pausedTicker) {
-      pausedTicker = selectedTicker;
-      pausedIndex = 0;
-      dates.clear();
-      prices.clear();
-
-      try {
-        Stocks stock(selectedTicker);
-        auto data = stock.priceHistory.getAllData();
-        if (!data.empty()) {
-          for (auto [date, vals] : data) {
-            dates.push_back(date);
-            if (vals.size() >= 4)
-              prices.push_back(vals[3]);  // close
-            else if (!vals.empty())
-              prices.push_back(vals[0]);
-          }
-          startDatePicker.setAvailableDates(dates);
-          endDatePicker.setAvailableDates(dates);
+        // =============================================================
+        //                     CONTRACT LOGIC
+        // =============================================================
+        if (!contractActive && startContractBtn.isClicked()) {
+            if (contractStartDate.empty()) {
+                DrawText("Pause simulation first to set start date!", 100, 155, 20, RED);
+            } else if (endDatePicker.getSelectedDate().empty()) {
+                DrawText("Please select an expiry date first!", 100, 155, 20, RED);
+            } else if (endDatePicker.getSelectedDate() <= contractStartDate) {
+                DrawText("Expiry date must be after current simulation date!", 100, 155, 20, RED);
+            } else {
+                contractActive = true;
+                contractEndDate = endDatePicker.getSelectedDate();
+                waitingForDecision = false;
+                contractBought = false;
+                cout << "Started contract: " << contractStartDate << " → " << contractEndDate << endl;
+            }
         }
-      } catch (...) {
-        // silently ignore if stock data missing
-      }
+
+        // =============================================================
+        //                       TICKER DATA LOAD
+        // =============================================================
+        if (contractActive) {
+            DrawText("⚠️ Contract active — cannot switch stock.", 100, 155, 20, ORANGE);
+        }
+        else if (!selectedTicker.empty() && selectedTicker != pausedTicker) {
+            pausedTicker = selectedTicker;
+            pausedIndex = 0;
+            dates.clear();
+            prices.clear();
+
+            try {
+                Stocks stock(selectedTicker);
+                auto data = stock.priceHistory.getAllData();
+                if (!data.empty()) {
+                    for (auto [date, vals] : data) {
+                        dates.push_back(date);
+                        prices.push_back((vals.size() >= 4) ? vals[3] : vals[0]);
+                    }
+                    endDatePicker.setAvailableDates(dates);
+                }
+            } catch (...) {}
+        }
+
+        // =============================================================
+        //                    SIMULATION EXECUTION
+        // =============================================================
+        if (!isSimulating && executeBtn.isClicked()) {
+            try {
+                if (selectedTicker.empty())
+                    throw runtime_error("Select a stock ticker first.");
+                if (dates.empty() || prices.empty())
+                    throw runtime_error("No data loaded for this stock.");
+
+                int startIndex = max(pausedIndex, (int)(prices.size() * 0.25f));
+                lineGraph = make_unique<Line>(priceGraphRect, dates, prices);
+                pnlGraph  = make_unique<Bar>(
+                    pnlGraphRect,
+                    vector<float>(prices.begin(), prices.begin() + startIndex)
+                );
+
+                lineGraph->startAnimationFrom(startIndex);
+                isSimulating = true;
+                simTime = 0;
+            } catch (exception &e) {
+                DrawText(e.what(), 100, 155, 20, RED);
+            }
+        }
+
+        // =============================================================
+        //                        STOP SIMULATION
+        // =============================================================
+        if (isSimulating && stopBtn.isClicked()) {
+            isSimulating = false;
+            if (lineGraph) {
+                lineGraph->stopAnimation();
+                pausedIndex = lineGraph->getCurrentIndex();
+                contractStartDate = lineGraph->getPausedDate();
+                DrawText(TextFormat("Paused on: %s", contractStartDate.c_str()), 980, 165, 18, YELLOW);
+            }
+        }
+
+        // =============================================================
+        //                     ACTIVE SIMULATION
+        // =============================================================
+        if (isSimulating) {
+            simTime += GetFrameTime();
+            if (lineGraph) lineGraph->simulation(GetFrameTime());
+            if (pnlGraph)  pnlGraph->simulation(GetFrameTime());
+
+            DrawText(TextFormat("⏱ Simulating: %.1fs", simTime), 980, 140, 20, GREEN);
+
+            if (contractActive && !contractEndDate.empty()) {
+                string currentDate = lineGraph->getCurrentDate();
+                if (currentDate == contractEndDate) {
+                    isSimulating = false;
+                    contractActive = false;
+                    waitingForDecision = true;
+                    lineGraph->stopAnimation();
+                    pausedIndex = lineGraph->getCurrentIndex();
+                    cout << "Contract expired at " << currentDate << endl;
+                }
+            }
+        }
+
+        // =============================================================
+        //                     DRAW GRAPH PANELS
+        // =============================================================
+        DrawRectangleRec(priceGraphRect, PANEL_COLOR);
+        DrawText("Stock Price Chart", priceGraphRect.x, priceGraphRect.y - 25, 22, ACCENT_COLOR);
+
+        DrawRectangleRec(pnlGraphRect, PANEL_COLOR);
+        DrawText("Portfolio P&L", pnlGraphRect.x, pnlGraphRect.y - 25, 22, ACCENT_COLOR);
+
+        DrawRectangleRec(greeksPanelRect, PANEL_COLOR);
+        DrawText("Option Greeks & Stats", greeksPanelRect.x + 10, greeksPanelRect.y - 25, 22, ACCENT_COLOR);
+
+        if (lineGraph) lineGraph->draw();
+        if (pnlGraph) pnlGraph->draw();
+
+        // =============================================================
+        //                   BLACK-SCHOLES GREEKS
+        // =============================================================
+        if (showBSStats) {
+            DrawText(TextFormat("Price: %.2f", optionPrice), greeksPanelRect.x + 15, greeksPanelRect.y + 0, 18, GREEN);
+            DrawText(TextFormat("Delta: %.4f", delta), greeksPanelRect.x + 15, greeksPanelRect.y + 25, 18, TEXT_COLOR);
+            DrawText(TextFormat("Gamma: %.4f", gamma), greeksPanelRect.x + 15, greeksPanelRect.y + 50, 18, TEXT_COLOR);
+            DrawText(TextFormat("Vega: %.4f", vega), greeksPanelRect.x + 15, greeksPanelRect.y + 75, 18, TEXT_COLOR);
+            DrawText(TextFormat("Theta: %.4f", theta), greeksPanelRect.x + 15, greeksPanelRect.y + 100, 18, TEXT_COLOR);
+        } else {
+            DrawText("Press 'Check ⚙️' to view Black-Scholes stats",
+                     greeksPanelRect.x + 15, greeksPanelRect.y + 60, 18, LIGHTGRAY);
+        }
+
+        // =============================================================
+        //                     CONTRACT POPUP
+        // =============================================================
+        if (waitingForDecision) {
+            Rectangle popup = {
+              static_cast<float>(GetScreenWidth()/2 - 180),
+              static_cast<float>(GetScreenHeight()/2 - 75),
+              360.0f, 150.0f
+          };
+
+            DrawRectangleRounded(popup, 0.1f, 0, DARKGRAY);
+            DrawText("Contract expired", popup.x + 60, popup.y + 20, 22, YELLOW);
+            DrawText("Would you like to buy?", popup.x + 60, popup.y + 55, 18, WHITE);
+
+            buyBtn.setPosition({popup.x + 40, popup.y + 100});
+            ignoreBtn.setPosition({popup.x + 200, popup.y + 100});
+            buyBtn.draw();
+            ignoreBtn.draw();
+
+            if (buyBtn.isClicked()) {
+                waitingForDecision = false;
+                contractBought = true;
+                contractActive = false;
+                contractStartDate.clear();
+                contractEndDate.clear();
+                cout << "User chose to BUY contract." << endl;
+            }
+            if (ignoreBtn.isClicked()) {
+                waitingForDecision = false;
+                contractBought = false;
+                contractActive = false;
+                contractStartDate.clear();
+                contractEndDate.clear();
+                cout << "User chose to IGNORE contract." << endl;
+            }
+        }
+
+        // =============================================================
+        //                          LAYERING
+        // =============================================================
+        if (tickerSelect.getIsOpen()) {
+            callPut.close(); optionStyle.close(); endDatePicker.close();
+        } else if (callPut.getIsOpen()) {
+            tickerSelect.close(); optionStyle.close(); endDatePicker.close();
+        } else if (optionStyle.getIsOpen()) {
+            tickerSelect.close(); callPut.close(); endDatePicker.close();
+        }
+
+        tickerSelect.drawExpanded();
+        callPut.drawExpanded();
+        optionStyle.drawExpanded();
+        endDatePicker.drawExpanded();
+
+        EndDrawing();
     }
-
-    // === Simulation trigger ===
-    if (!isSimulating && executeBtn.isClicked()) {
-      try {
-        if (selectedTicker.empty())
-          throw runtime_error("Select a stock ticker first.");
-        if (dates.empty() || prices.empty())
-          throw runtime_error("No data loaded for this stock.");
-
-        // Keep simulation start logic the same
-        int startIndex = max(pausedIndex, (int)(prices.size() * 0.25f));
-        lineGraph = make_unique<Line>(priceGraphRect, dates, prices);
-        pnlGraph = make_unique<Bar>(
-            pnlGraphRect,
-            vector<float>(prices.begin(), prices.begin() + startIndex));
-
-        lineGraph->startAnimationFrom(startIndex);
-        isSimulating = true;
-        simTime = 0;
-      } catch (exception& e) {
-        DrawText(e.what(), 100, 155, 20, RED);
-      }
-    }
-
-    // ==== Stop simulation ====
-    if (isSimulating && stopBtn.isClicked()) {
-      isSimulating = false;
-      tickerSelect.close();
-      callPut.close();
-      optionStyle.close();
-      startDatePicker.close();
-      endDatePicker.close();
-
-      if (lineGraph) {
-        lineGraph->stopAnimation();
-        pausedIndex = lineGraph->getCurrentIndex();
-        DrawText(
-            TextFormat("Paused on: %s", lineGraph->getPausedDate().c_str()),
-            980, 165, 18, YELLOW);
-      }
-    }
-
-    // === Simulation active ===
-    if (isSimulating) {
-      simTime += GetFrameTime();
-      if (lineGraph) lineGraph->simulation(GetFrameTime());
-      if (pnlGraph) pnlGraph->simulation(GetFrameTime());
-      DrawText(TextFormat("Simulating: %.1fs", simTime), 980, 140, 20, GREEN);
-    }
-
-    // === Graph panels ===
-    DrawRectangleRec(priceGraphRect, PANEL_COLOR);
-    DrawText("Stock Price Chart", priceGraphRect.x, priceGraphRect.y - 25, 22,
-             ACCENT_COLOR);
-
-    DrawRectangleRec(pnlGraphRect, PANEL_COLOR);
-    DrawText("Portfolio P&L", pnlGraphRect.x, pnlGraphRect.y - 25, 22,
-             ACCENT_COLOR);
-
-    DrawRectangleRec(greeksPanelRect, PANEL_COLOR);
-    DrawText("Option Greeks & Stats", greeksPanelRect.x + 10,
-             greeksPanelRect.y - 25, 22, ACCENT_COLOR);
-
-    if (lineGraph) lineGraph->draw();
-    if (pnlGraph) pnlGraph->draw();
-
-    // Placeholder Greek stats
-    if (showBSStats) {
-      DrawText(TextFormat("Price: %.2f", optionPrice), greeksPanelRect.x + 15,
-               greeksPanelRect.y + 0, 18, GREEN);
-      DrawText(TextFormat("Delta: %.4f", delta), greeksPanelRect.x + 15,
-               greeksPanelRect.y + 25, 18, TEXT_COLOR);
-      DrawText(TextFormat("Gamma: %.4f", gamma), greeksPanelRect.x + 15,
-               greeksPanelRect.y + 50, 18, TEXT_COLOR);
-      DrawText(TextFormat("Vega: %.4f", vega), greeksPanelRect.x + 15,
-               greeksPanelRect.y + 75, 18, TEXT_COLOR);
-      DrawText(TextFormat("Theta: %.4f", theta), greeksPanelRect.x + 15,
-               greeksPanelRect.y + 100, 18, TEXT_COLOR);
-    } else {
-      DrawText("Press 'Check' to view Black-Scholes stats",
-               greeksPanelRect.x + 15, greeksPanelRect.y + 60, 18, LIGHTGRAY);
-    }
-
-    // === Manage layering (z-order) ===
-    if (tickerSelect.getIsOpen()) {
-      callPut.close();
-      optionStyle.close();
-      startDatePicker.close();
-      endDatePicker.close();
-    } else if (callPut.getIsOpen()) {
-      tickerSelect.close();
-      optionStyle.close();
-      startDatePicker.close();
-      endDatePicker.close();
-    } else if (optionStyle.getIsOpen()) {
-      tickerSelect.close();
-      callPut.close();
-      startDatePicker.close();
-      endDatePicker.close();
-    }
-
-    // Draw expanded menus last
-    tickerSelect.drawExpanded();
-    callPut.drawExpanded();
-    optionStyle.drawExpanded();
-    startDatePicker.drawExpanded();
-    endDatePicker.drawExpanded();
-
-    EndDrawing();
-  }
 }
+
+
+
 
 // has inputs of *
 void Graphics::signupScreen() {

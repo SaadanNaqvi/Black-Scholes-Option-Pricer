@@ -32,6 +32,8 @@ public:
 
     bool getIsOpen() const { return isOpen; }
     void close() { isOpen = false; }
+    Rectangle getBounds() const { return bounds; }
+    
 };
 
 #endif

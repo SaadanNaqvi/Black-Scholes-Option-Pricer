@@ -1,39 +1,40 @@
 // Line.h
 #ifndef LINE_H
 #define LINE_H
+
+#pragma once
 #include "Graph.h"
-#include "Theme.h"
-#include <vector>
 #include <string>
-using namespace std;
+#include <vector>
+#include <algorithm>
+#include "raylib.h"
 
 class Line : public Graph {
 private:
-    vector<float> prices;
-    vector<string> dates;
+    std::vector<std::string> dates;
+    std::vector<float> prices;
+
+    float yMin = 0.0f;
+    float yMax = 0.0f;
+    int currentIndex = 0;
 
     int xTicks = 6;
     int yTicks = 6;
-    float yMin = 0, yMax = 0;
-    float timeAccumulator = 0.0f;
-    int currentIndex = 0;
+
     bool animating = false;
+    float timeAccumulator = 0.0f;
 
 public:
-    Line(Rectangle rect, vector<string> t, vector<float> p);
-
+    Line(Rectangle rect, std::vector<std::string> t, std::vector<float> p);
+    void startAnimation();
     void draw() override;
     void simulation(float dt) override;
-
-    void startAnimation();
-    void stopAnimation();
-    string getPausedDate() const;
     void startAnimationFrom(int index);
-
-    int getCurrentIndex() { return currentIndex; }
-    
-
-    virtual ~Line() = default;
+    void stopAnimation();
+    int getCurrentIndex() const;
+    std::string getPausedDate() const;
+    std::string getCurrentDate() const;
 };
+
 
 #endif
