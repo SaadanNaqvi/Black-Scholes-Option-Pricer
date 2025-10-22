@@ -449,9 +449,20 @@ void Graphics::signupScreen() {
     loginRedirect.draw();
 
     if (signupBtn.isClicked()) {
-      if (signupUser(username.getContent(), firstName.getContent(),
-                     lastName.getContent(), password.getContent())) {
-        accountCreated = true;
+      bool valid = true;
+      for (auto invalid : R"(\/:*?"<>|)") {
+        for (auto x : username.getContent())
+          if (x == invalid) valid = false;
+        for (auto x : firstName.getContent())
+          if (x == invalid) valid = false;
+        for (auto x : lastName.getContent())
+          if (x == invalid) valid = false;
+        for (auto x : password.getContent())
+          if (x == invalid) valid = false;
+      }
+      if (valid && signupUser(username.getContent(), firstName.getContent(),
+                              lastName.getContent(), password.getContent())) {
+        if (valid == true) accountCreated = true;
       }
     }
 
