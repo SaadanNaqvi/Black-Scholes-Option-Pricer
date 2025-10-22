@@ -1,6 +1,7 @@
 #include "DatePicker.h"
 #include "raylib.h"
 #include <algorithm>
+#include <cmath>
 
 #define PANEL_COLOR  CLITERAL(Color){ 25, 40, 80, 255 }
 #define HOVER_COLOR  CLITERAL(Color){ 45, 65, 120, 255 }
@@ -40,8 +41,10 @@ void DatePicker::update() {
         }
 
         float scrollMove = GetMouseWheelMove();
+        const float ScrollAdjustSpeed =10;
         if (scrollMove != 0 && availableDates.size() > visibleItems) {
-            scrollIndex -= scrollMove;
+            int IncScroll=scrollMove*ScrollAdjustSpeed;
+            scrollIndex -= IncScroll;
             scrollIndex = std::clamp(scrollIndex, 0, (int)availableDates.size() - visibleItems);
         }
     }
