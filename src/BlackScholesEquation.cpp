@@ -52,7 +52,7 @@ double OptionType::D2() const {
   return D1() - sigma * std::sqrt(T);
 }
 
-// EUROPEAN PRICINGGGG
+// EUROPEAN PRICING
 
 double EuropeanCall::price() {
   return N(OptionType::D1()) * marketParams.spotPrice*std::exp(-marketParams.dividendYield * marketParams.timeToMaturity) -
