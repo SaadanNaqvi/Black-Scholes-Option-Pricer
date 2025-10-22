@@ -8,7 +8,11 @@ They can then enter their expiry and strike date, and simulate a stock to improv
 once their expiry hit they can choose to ignore or buy/sell dependong on their option type.
 This will result in either profit or loss, depending on the users ability to trade.
 
-LLinux:
+Linux:
 To run the program enter the following command into the terminal : make dashboardL
 this will create a file called dashboardL.out.
 After this you can run : ./dashboardL.out
+
+Mac:
+Downlaod Raylib library to your device
+run command in terminal: make dashboard
