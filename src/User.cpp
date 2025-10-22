@@ -302,8 +302,9 @@ void User::CSVWrite() {
        << totalInvestmentCapital << "\n";
   file << portfolios[0]->getCashBalance() << ","
        << portfolios[0]->getInitialValue() << ","
-       << portfolios[0]->getCreationDate() << portfolios[0]->getLastUpdated()
-       << "," << portfolios[0]->getTotalPnl() << "\n";
+       << portfolios[0]->getCreationDate() << ","
+       << portfolios[0]->getLastUpdated() << "," << portfolios[0]->getTotalPnl()
+       << "\n";
   unordered_map<string, long long> a = portfolios[0]->getStocks();
   for (auto [x, y] : a) {
     file << x << "," << y << "\n";
