@@ -44,7 +44,7 @@ void Graphics::dashboard() {
     // ---------------------- UI ELEMENTS ------------------------
     Dropdown tickerSelect({100, 90, 160, 35}, tickers);
     Dropdown callPut({280, 90, 100, 35}, {"Call", "Put"});
-    Dropdown optionStyle({400, 90, 150, 35}, {"European", "American"});
+    Dropdown optionStyle({400, 90, 150, 35}, {"European"});
     Text strike({570, 90, 100, 35}, "Strike");
     DatePicker endDatePicker({690, 90, 150, 35}, {});
 
