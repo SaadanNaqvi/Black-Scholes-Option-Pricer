@@ -172,6 +172,7 @@ double User::calculateOverallReturn() const {
 
 // Risk management
 string User::getRiskLevelString() const {
+  //Check risklevel.
   switch (riskLevel) {
     case CONSERVATIVE:
       return "Conservative";
@@ -368,9 +369,26 @@ void User::CSVRead() {
       if (portfolios.empty()) portfolios.push_back(p);
     }
   }
+  if (portfolios[0]) {
+    while (getline(file, line)) {
+      stringstream ss(line);
+      string ticker;
+      string quantity;
+      if (getline(ss, ticker, ',')) {
+        if (ticker == "-1") break;
+        try {
+          getline(ss, quantity);
+          portfolios[0]->appendStock(ticker, stoll(quantity));
+        } catch (const exception& e) {
+          cerr << "Failure to read in stocks " << line << endl;
+        }
+      }
+    }
+  }
 
   file.close();
 }
+
 bool User::canBuy(float cost) {
   // Return true only if the user actually has enough cash
   return portfolios[0]->getCashBalance() >= cost;
@@ -381,19 +399,7 @@ bool User::canSell(string ticker, float number) {
   return holdings.find(ticker) != holdings.end() && holdings[ticker] >= number;
 }
 
-// VARIABLES FOR MY CONVENIENCE
-/*  this->userId = userId;
-  this->userName = userName;
-  this->firstName = firstName;
-  this->lastName = lastName;
-  this->riskLevel = MODERATE;
-  this->riskTolerance = 50.0;
-  this->registrationDate = time(0);
-  this->lastLoginDate = 0;
-  this->isActive = true;
-  this->totalInvestmentCapital = 0.0;
 
-  */
 // Destructor
 User::~User() {
   // Clean up portfolios

@@ -5,9 +5,9 @@
 
 class InputElement : public Graphics {
     protected:
-        Rectangle area;
+        Rectangle area; // area of the input element
     public:
-        InputElement(Rectangle rect) : area(rect) {}
+        InputElement(Rectangle rect) : area(rect) {} // input element constructor
 };
 
 #endif

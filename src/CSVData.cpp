@@ -36,17 +36,21 @@ CSVData::CSVData(string ticker) {
   map<string, vector<double>> allData;
   getline(fin, category);
   stringstream s(category);
-
+//Reads in the CSV column labels
   header = functionReader(s);
+  //Get's one line of the CSV.
   while (getline(fin, stockDetails)) {
     stringstream ss(stockDetails);
     string date;
+    //get's the date
     getline(ss, date, ',');
 
     while (getline(ss, price, ',')) {
+      //Data for that date is appeneded to the map.
       allData[date].push_back(stod(price));
     }
   }
+  //header is the column labels
   this->header = header;
   this->allData = allData;
   colSize = header.size();

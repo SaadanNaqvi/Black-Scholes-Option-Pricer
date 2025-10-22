@@ -123,7 +123,7 @@ bool Order::canExecute(string date) {
   if (stock == nullptr || status != PENDING) return false;
 
   double currentPrice = stock->getCurrentPrice(date);
-
+//IS THE USER ALLOWED TO SELL BASED ON THE RESOURCES THEY HAVE? ENOUGH STOCK OR MONEY.
   switch (priceType) {
     case MARKET:
       return true;

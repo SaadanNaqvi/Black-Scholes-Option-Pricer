@@ -7,15 +7,6 @@
 #include <vector>
 using namespace std;
 #include "CSVData.h"
-/*struct stockData {
-  double currentPrice;
-  double openPrice;
-  double closePrice;
-  double highPrice;
-  double lowPrice;
-  long long volume;
-};
-*/
 
 // Base class (Layer 1) - Financial Instrument
 class Stocks {

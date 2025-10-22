@@ -17,3 +17,7 @@ void Button::setLabel(string newLabel) {
     label = newLabel;
 }
 
+void Button::setPosition(Vector2 pos){
+    bounds.x = pos.x; bounds.y = pos.y;
+}
+

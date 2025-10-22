@@ -2,6 +2,7 @@
 #define GREEKS_H  
 struct MarketParams;
 
+//so can declare using just marketparams instead of seperate
 namespace Greeks {
 
 double deltaCall(const MarketParams& p);

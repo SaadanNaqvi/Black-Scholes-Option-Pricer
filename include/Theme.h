@@ -4,6 +4,8 @@
 #include "raylib.h"
 
 
+// Easy access to themes for the application UI components
+
 #define BG_COLOR        CLITERAL(Color){ 15, 25, 50, 255 }      // deep navy blue
 #define PANEL_COLOR     CLITERAL(Color){ 25, 40, 80, 255 }      // darker blue
 #define TEXT_COLOR      CLITERAL(Color){ 230, 230, 240, 255 }   // off-white text

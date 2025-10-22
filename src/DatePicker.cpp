@@ -81,7 +81,6 @@ void DatePicker::drawExpanded() {
     int displayCount = std::min(visibleItems, (int)availableDates.size());
     DrawRectangle(bounds.x, bounds.y + bounds.height, bounds.width, displayCount * bounds.height, PANEL_COLOR);
     DrawRectangleLines(bounds.x, bounds.y + bounds.height, bounds.width, displayCount * bounds.height, ACCENT_COLOR);
-
     for (int i = 0; i < displayCount && scrollIndex + i < availableDates.size(); i++) {
         float y = bounds.y + bounds.height + i * bounds.height;
         Rectangle itemRect = { bounds.x, y, bounds.width, bounds.height };

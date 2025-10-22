@@ -2,7 +2,9 @@
 #include <iostream>
 #include <numbers>
 
-#include "blackScholes.h"
+#include "BlackScholes.h"
+#include "Call.h"
+#include "Put.h"
 // for equations visit
 // https://financetrainingcourse.com/education/2010/07/derivative-pricing-black-scholes-equation-binomial-trees-calculation-reference/
 

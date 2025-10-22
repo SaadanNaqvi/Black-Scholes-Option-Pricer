@@ -96,7 +96,6 @@ void Dropdown::drawBase() {
 void Dropdown::drawExpanded() {
     if (!isOpen) return;
 
-    int maxVisible = (int)min((float)visibleItems, (float)options.size());
     bool scrollable = (options.size() > visibleItems);
 
     float totalHeight = (scrollable ? visibleItems : options.size()) * bounds.height;

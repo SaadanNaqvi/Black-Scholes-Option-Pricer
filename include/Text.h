@@ -6,6 +6,8 @@
 #include "InputElement.h"
 using namespace std;
 
+// Inherits from input element allowing the user to input text data
+
 class Text : public InputElement {
  private:
   string placeholder;

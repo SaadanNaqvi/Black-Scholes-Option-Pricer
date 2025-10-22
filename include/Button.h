@@ -5,16 +5,21 @@
 #include <string>
 using namespace std;
 
-
+// Class inherits from input element
 class Button : public InputElement {
 private:
-    string label;
-    Rectangle bounds;
+    string label; // Text written inside button
+    Rectangle bounds; // The buttons clicable area
 public:
-    Button(Rectangle rect, string label);
+    Button(Rectangle rect, string label); // Button constructor
+
+    // Handles the reading of the button background, outline and label
     void draw() override;
-    bool isClicked();
-    void setPosition(Vector2 pos) { bounds.x = pos.x; bounds.y = pos.y; }
+
+    bool isClicked(); // Detects if user has clicked button
+
+    void setPosition(Vector2 pos); // Updates the buttons on screen position
+
     void setLabel(string newLabel);
 
 

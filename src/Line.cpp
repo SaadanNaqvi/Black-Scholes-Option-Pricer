@@ -46,7 +46,6 @@ void Line::draw() {
   float stepX = area.width / (float)(prices.size() - 1);
 
   // Draw the y-axis grid lines and labels
-  int yTicks = 6;
   for (int i = 0; i <= yTicks; i++) {
     float yVal = yMin + (yMax - yMin) * (i / (float)yTicks);
     float yPos = mapY(yVal, yMin, yMax, area.y, area.height);
@@ -56,7 +55,6 @@ void Line::draw() {
   }
 
   // Draw the labels for the x-axis
-  int xTicks = 6;
   int totalPoints = prices.size();
   for (int i = 0; i <= xTicks; i++) {
     int idx = (int)((i / (float)xTicks) * (totalPoints - 1));
@@ -96,7 +94,7 @@ void Line::draw() {
 void Line::simulation(float dt) {
   if (!animating || prices.empty()) return;
   timeAccumulator += dt;
-
+    //Holds time
   if (timeAccumulator >= 0.05f) {
     currentIndex = min(currentIndex + 1, (int)prices.size() - 1);
     timeAccumulator = 0.0f;

@@ -90,19 +90,20 @@ std::vector<std::string> BSVarCalc::datesUpTo(CSVData& px,
     std::vector<std::string> allDates = px.getDates();
     if (allDates.empty()) throw std::runtime_error("No dates in CSV.");
 
-    // Ensure ascending order once (or guarantee this in CSVData)
+    // Ensure ascending order
     if (!std::is_sorted(allDates.begin(), allDates.end())) {
         std::sort(allDates.begin(), allDates.end());
     }
 
-    // First element strictly greater than uptoDate
+    // First element greater than uptoDate (aka current date)
     auto itEnd = std::upper_bound(allDates.begin(), allDates.end(), uptoDate);
     if (itEnd == allDates.begin()) {
         throw std::runtime_error("No data on or before uptoDate.");
     }
 
-    // Clamp window length to what exists
+    //find how many elements between start and end points
     const auto avail = static_cast<int>(std::distance(allDates.begin(), itEnd));
+    //ensures we dont take more dates than available
     const int take = std::max(0, std::min(countNeeded, avail));
     auto itBegin = itEnd - take;
 
