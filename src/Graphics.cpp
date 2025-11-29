@@ -19,7 +19,7 @@
 #include "Text.h"
 #include "Theme.h"
 #include "User.h"
-#include "BlackScholes.h"
+#include "blackScholes.h"
 #include "Call.h"
 #include "Put.h"
 using namespace std;
